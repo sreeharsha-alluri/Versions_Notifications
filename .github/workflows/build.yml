@@ -37,7 +37,7 @@ jobs:
         uses: ./.github/actions/notify_teams  # Points to the local composite action
         with:
           overall-status: ${{ env.status }}
-          run-url: ${{ github.run_url }}
-          action-name: ${{ job.name }}
+          run-url: ${{ github.run_url }}  # Ensure this is passed correctly
+          action-name: ${{ job.name }}  # Use the job name dynamically
           workflow-status: ${{ env.status }}
           workflow-name: ${{ github.workflow }}
