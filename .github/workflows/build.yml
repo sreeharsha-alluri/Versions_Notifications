@@ -27,37 +27,21 @@ jobs:
           cat ryzenai_pip_list.txt || { echo "Failed to read ryzenai_pip_list.txt"; exit 1; }
 
       - name: Extract required packages with formatting
-        id: capture-notifications
+        id: extract-notifications
         run: |
           echo "Running grep to filter packages and format output..."
-          grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt | sed 's/^/\n&/; s/$/&\n/' > notifications.txt
+          notifications=$(grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt | sed 's/^/\n&/; s/$/&\n/')
           
-          notifications=$(cat notifications.txt | sed 's/"/\\"/g' | sed 's/^/\\n/' | sed 's/$/\\n/')
-          echo "notifications=$notifications" >> $GITHUB_OUTPUT
-
-      - name: Check notifications output
-        run: |
-          echo "Contents of notifications.txt:"
-          cat notifications.txt || { echo "notifications.txt not created or empty"; exit 1; }
-
-      - name: Debug captured notifications
-        run: |
-          echo "Captured notifications:"
-          echo "${{ steps.capture-notifications.outputs.notifications }}"
-
-  notify:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+          # Print the notifications directly for the next step
+          echo "notifications=${notifications}" 
+          echo "Captured notifications: $notifications"
 
       - name: Notify Teams
         uses: ./.github/actions/notify_teams
         with:
-          overall-status: ${{ needs.build.result }}
+          overall-status: ${{ job.status }} # Capturing the overall status of the build job
           run-url: ${{ github.run_url }}
           action-name: Build
-          workflow-status: ${{ needs.build.result }}
+          workflow-status: ${{ job.status }} # Status of the workflow
           workflow-name: ${{ github.workflow }}
-          version-info: ${{ needs.build.outputs.notifications }}
+          version-info: ${{ steps.extract-notifications.outputs.notifications }} # Use the captured notifications directly
