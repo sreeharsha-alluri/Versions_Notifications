@@ -24,6 +24,9 @@ jobs:
           echo "Captured notifications:"
           echo "$notifications"
 
+          # Save the notifications to a file for later use
+          echo "$notifications" > notifications.txt
+
       - name: Notify Teams
         uses: ./.github/actions/notify_teams
         with:
@@ -32,4 +35,5 @@ jobs:
           action-name: Build
           workflow-status: ${{ job.status }} # Status of the workflow
           workflow-name: ${{ github.workflow }}
-          version-info: "${{ steps.extract-notifications.outputs.notifications }}" # Directly pass formatted notifications
+          version-info: |
+            $(cat notifications.txt)  # Pass the captured notifications directly
