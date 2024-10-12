@@ -21,6 +21,15 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Debug Inputs
+      shell: bash
+      run: |
+        echo "Overall Status: ${{ inputs.overall-status }}"
+        echo "Run URL: ${{ inputs.run-url }}"
+        echo "Action Name: ${{ inputs.action-name }}"
+        echo "Workflow Status: ${{ inputs.workflow-status }}"
+        echo "Workflow Name: ${{ inputs.workflow-name }}"
+
     - name: Send Notification
       shell: bash
       run: |
