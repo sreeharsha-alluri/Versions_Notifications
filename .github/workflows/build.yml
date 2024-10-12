@@ -36,4 +36,5 @@ jobs:
           workflow-status: ${{ job.status }}  # Status of the workflow
           workflow-name: ${{ github.workflow }}
           version-info: |
+            Version Information:
             $(cat notifications.txt)
