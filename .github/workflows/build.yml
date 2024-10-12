@@ -16,14 +16,13 @@ jobs:
       - name: Echo building
         run: echo "Building..."
 
-      - name: Generate the notifications from the pip list
+      - name: Extract versions from pip list
         run: |
           grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt > notifications.txt
 
-          # Prepare version information for the notification
-          version_info=$(<notifications.txt)
-          version_info="${version_info//\"/\\\"}"  # Escape double quotes
-          echo "version_info=${version_info}" >> $GITHUB_ENV
+          # Escape quotes and format for sending
+          version_info=$(<notifications.txt | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
+          echo "::set-output name=version_info::${version_info}"
 
   notify:
     needs: build
@@ -31,11 +30,11 @@ jobs:
 
     steps:
       - name: Notify Teams with build status and version info
-        uses: ./.github/actions/notify_teams  # Points to the local composite action
+        uses: ./.github/actions/notify_teams  # Points to your composite action
         with:
           overall-status: ${{ needs.build.result }}
           run-url: ${{ github.run_url }}
-          action-name: ${{ job.name }}  # Use the job name dynamically
+          action-name: ${{ job.name }}
           workflow-status: ${{ needs.build.result }}
           workflow-name: ${{ github.workflow }}
-          version-info: ${{ env.version_info }}
+          version-info: ${{ steps.build.outputs.version_info }}
