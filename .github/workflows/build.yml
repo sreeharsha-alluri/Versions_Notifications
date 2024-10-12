@@ -1,0 +1,42 @@
+name: Simple Build and Notify
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Echo building
+        run: echo "Building..."
+
+  notify:
+    needs: build  # This job will wait for 'build' to finish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Capture build status
+        id: capture-status
+        run: |
+          if [ "${{ needs.build.result }}" == "success" ]; then
+            echo "status=success" >> $GITHUB_ENV
+          else
+            echo "status=failure" >> $GITHUB_ENV
+
+      - name: Notify Teams with build status
+        uses: ./.github/actions/notify_teams
+        with:
+          overall-status: ${{ env.status }}
+          run-url: ${{ github.run_url }}
+          action-name: ${{ needs.build.outputs.job_name }}  # Dynamically use the job name
+          workflow-status: ${{ env.status }}
+          workflow-name: ${{ github.workflow }}
+
+    outputs:
+      job_name: ${{ job.name }}  # Capture the job name dynamically
