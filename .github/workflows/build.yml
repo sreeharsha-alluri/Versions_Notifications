@@ -37,14 +37,14 @@ jobs:
         id: generate-notifications
         run: |
           # Generate the notifications from the pip list
-          grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt | 
-          sed 's/^/\n&/; s/$/&\n/' > notifications.txt
+          grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt > notifications.txt
 
-          # Set the notifications variable
-          notifications=$(cat notifications.txt | sed 's/"/\\"/g' | sed 's/^/\\n/' | sed 's/$/\\n/')
-
-          # Output the notifications to be used in the next step
-          echo "notifications=$notifications" >> $GITHUB_ENV
+          # Read the contents of notifications.txt and format it for the environment variable
+          notifications=$(<notifications.txt)
+          
+          # Escape double quotes and set the notifications variable
+          notifications="${notifications//\"/\\\"}"  # Escape double quotes
+          echo "notifications=${notifications}" >> $GITHUB_ENV  # Use a single line format for the environment variable
 
       - name: Notify Teams with build status
         uses: ./.github/actions/notify_teams  # Points to the local composite action
