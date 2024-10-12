@@ -13,15 +13,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Generate pip list
-        run: |
-          pip list > ryzenai_pip_list.txt
-
-      - name: Output pip list
-        run: |
-          echo "Contents of ryzenai_pip_list.txt:"
-          cat ryzenai_pip_list.txt || { echo "Failed to read ryzenai_pip_list.txt"; exit 1; }
-
       - name: Extract required packages with formatting
         id: extract-notifications
         run: |
