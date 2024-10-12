@@ -13,10 +13,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Generate pip list
-        run: |
-          pip list > ryzenai_pip_list.txt  # Ensure this file is created
-
       - name: Extract required packages with formatting
         id: extract-notifications
         run: |
