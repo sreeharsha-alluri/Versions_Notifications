@@ -13,28 +13,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install dependencies
-        run: |
-          echo "Installing dependencies"
-
-      - name: Generate pip list
-        run: |
-          pip list > ryzenai_pip_list.txt
-
-      - name: Output pip list
-        run: |
-          echo "Contents of ryzenai_pip_list.txt:"
-          cat ryzenai_pip_list.txt || { echo "Failed to read ryzenai_pip_list.txt"; exit 1; }
-
       - name: Extract required packages with formatting
         id: extract-notifications
         run: |
           echo "Running grep to filter packages and format output..."
-          notifications=$(grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt | sed 's/^/\n&/; s/$/&\n/')
+          grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt | sed 's/^/\n&/; s/$/&\n/' > notifications.txt
           
-          # Print the notifications directly for the next step
-          echo "notifications=${notifications}" 
+          # Capture the formatted notifications into a variable
+          notifications=$(cat notifications.txt | sed 's/"/\\"/g' | sed 's/^/\\n/' | sed 's/$/\\n/')
           echo "Captured notifications: $notifications"
+          
+          # Create a file to store notifications
+          echo "$notifications" > notifications.txt
 
       - name: Notify Teams
         uses: ./.github/actions/notify_teams
@@ -44,4 +34,5 @@ jobs:
           action-name: Build
           workflow-status: ${{ job.status }} # Status of the workflow
           workflow-name: ${{ github.workflow }}
-          version-info: ${{ steps.extract-notifications.outputs.notifications }} # Use the captured notifications directly
+          version-info: |
+            $(cat notifications.txt)  # Use the captured notifications directly
