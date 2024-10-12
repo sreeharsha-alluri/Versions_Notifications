@@ -36,4 +36,4 @@ jobs:
           workflow-status: ${{ job.status }}  # Status of the workflow
           workflow-name: ${{ github.workflow }}
           version-info: |
-            $(cat notifications.txt)  # Pass the captured notifications directly
+            $(cat notifications.txt)
