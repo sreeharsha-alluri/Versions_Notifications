@@ -45,6 +45,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: build # Ensure this job runs after the build job
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3 # Ensure the repository is checked out again
+
       - name: Notify Teams
         uses: ./.github/actions/notify_teams
         with:
