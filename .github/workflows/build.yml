@@ -16,17 +16,14 @@ jobs:
       - name: Extract required packages with formatting
         id: extract-notifications
         run: |
-          echo "Running grep to filter packages and format output..."
+          echo "Running grep to filter packages and format output"
           # Extract and format notifications, preserving newlines and adding bullet points
           notifications=$(grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt | sed 's/^/• /; s/$/\n/' | tr -d '\r')
-
           # Debug output to ensure correct format
           echo "Captured notifications:"
           echo "$notifications"
-
           # Save the notifications to a file for later use
           echo "$notifications" > notifications.txt
-
       - name: Notify Teams
         uses: ./.github/actions/notify_teams
         with:
@@ -36,5 +33,4 @@ jobs:
           workflow-status: ${{ job.status }}  # Status of the workflow
           workflow-name: ${{ github.workflow }}
           version-info: |
-            Version Information:
             $(cat notifications.txt)
