@@ -21,48 +21,36 @@ jobs:
         run: |
           pip list > ryzenai_pip_list.txt
 
-      - name: Check pip list output
+      - name: Output pip list
         run: |
-          if [ -f ryzenai_pip_list.txt ]; then
-            echo "Contents of ryzenai_pip_list.txt:"
-            cat ryzenai_pip_list.txt
-          else
-            echo "File ryzenai_pip_list.txt does not exist!"
-            exit 1
-          fi
+          echo "Contents of ryzenai_pip_list.txt:"
+          cat ryzenai_pip_list.txt || { echo "Failed to read ryzenai_pip_list.txt"; exit 1; }
 
-      - name: Extract required packages
+      - name: Extract required packages with formatting
         run: |
-          grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt > notifications.txt
-          if [ $? -ne 0 ]; then
-            echo "Error: grep command failed. Check the input file."
-            exit 1
-          fi
+          echo "Running grep to filter packages and format output..."
+          grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt | sed 's/^/\n&/; s/$/&\n/' > notifications.txt
+          
+          # Capture the formatted notifications into a variable
+          notifications=$(cat notifications.txt | sed 's/"/\\"/g' | sed 's/^/\\n/' | sed 's/$/\\n/')
+          echo "Captured notifications: $notifications"
+          echo "::set-output name=notifications::$notifications"
 
       - name: Check notifications output
         run: |
-          if [ -f notifications.txt ]; then
-            echo "Contents of notifications.txt:"
-            cat notifications.txt
-          else
-            echo "File notifications.txt does not exist!"
-            exit 1
-          fi
-      
-      - name: Read and prepare version info
-        id: version-info
-        run: |
-          versions=$(<notifications.txt)
-          versions="${versions//'%'/%25}"
-          versions="${versions//$'\n'/\\n}"
-          echo "::set-output name=versions::$versions"
+          echo "Contents of notifications.txt:"
+          cat notifications.txt || { echo "notifications.txt not created or empty"; exit 1; }
 
+  notify:
+    runs-on: ubuntu-latest
+    needs: build # Ensure this job runs after the build job
+    steps:
       - name: Notify Teams
         uses: ./.github/actions/notify_teams
         with:
-          overall-status: ${{ job.status }}
+          overall-status: ${{ needs.build.result }} # Capturing the overall status of the build job
           run-url: ${{ github.run_url }}
           action-name: Build
-          workflow-status: ${{ job.status }}
+          workflow-status: ${{ needs.build.result }} # Status of the workflow
           workflow-name: ${{ github.workflow }}
-          version-info: ${{ steps.version-info.outputs.versions }}
+          version-info: ${{ needs.build.outputs.notifications }} # Use the captured notifications
