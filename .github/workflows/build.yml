@@ -33,6 +33,18 @@ jobs:
             echo "status=failure" >> $GITHUB_ENV
           fi
 
+      - name: Generate Notifications
+        run: |
+          # Generate the notifications from the pip list
+          grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt | 
+          sed 's/^/\n&/; s/$/&\n/' > notifications.txt
+
+          # Set the notifications variable
+          notifications=$(cat notifications.txt | sed 's/"/\\"/g' | sed 's/^/\\n/' | sed 's/$/\\n/')
+
+          # Send notifications to Teams
+          curl -H "Content-Type: application/json" -d '{ "text": "'"$notifications"'" }' "https://amdcloud.webhook.office.com/webhookb2/133d4f16-689b-4281-a94b-44725b948c77@3dd8961f-e488-4e60-8e11-a82d994e183d/IncomingWebhook/20c43fc799fd49e9813582813c638323/f9e22351-f1c9-494f-88c5-8e04accf2ffe"
+
       - name: Notify Teams with build status
         uses: ./.github/actions/notify_teams  # Points to the local composite action
         with:
