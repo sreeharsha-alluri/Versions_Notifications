@@ -49,17 +49,17 @@ runs:
           {
             "type": "TextBlock",
             "text": "**Workflow Name:** '${{ inputs.workflow-name }}'",
-            "color": "${{ inputs.overall-status == 'failure' ? 'Attention' : 'Good' }}"
+            "color": "${{ inputs.overall-status == 'failure' && 'Attention' || 'Good' }}"
           },
           {
             "type": "TextBlock",
             "text": "**Workflow Status:** '${{ inputs.workflow-status }}'",
-            "color": "${{ inputs.overall-status == 'failure' ? 'Attention' : 'Good' }}"
+            "color": "${{ inputs.overall-status == 'failure' && 'Attention' || 'Good' }}"
           },
           {
             "type": "TextBlock",
             "text": "**Version Information:**\n${version_info}",
-            "color": "${{ inputs.overall-status == 'failure' ? 'Attention' : 'Good' }}"
+            "color": "${{ inputs.overall-status == 'failure' && 'Attention' || 'Good' }}"
           }
         ],
         "msteams": {
