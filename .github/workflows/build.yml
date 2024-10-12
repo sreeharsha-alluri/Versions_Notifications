@@ -13,14 +13,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Generate pip list
+        run: |
+          pip list > ryzenai_pip_list.txt
+
+      - name: Output pip list
+        run: |
+          echo "Contents of ryzenai_pip_list.txt:"
+          cat ryzenai_pip_list.txt || { echo "Failed to read ryzenai_pip_list.txt"; exit 1; }
+
       - name: Extract required packages with formatting
         id: extract-notifications
         run: |
           echo "Running grep to filter packages and format output..."
-          grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt | sed 's/^/\n&/; s/$/&\n/' > notifications.txt
+          grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt | sed 's/^/    /; s/$/\n/' > notifications.txt
           
           # Capture the formatted notifications into a variable
-          notifications=$(cat notifications.txt | sed 's/"/\\"/g' | sed 's/^/\\n/' | sed 's/$/\\n/')
+          notifications=$(cat notifications.txt | sed 's/"/\\"/g')
           echo "Captured notifications: $notifications"
           
           # Create a file to store notifications
@@ -35,4 +44,4 @@ jobs:
           workflow-status: ${{ job.status }} # Status of the workflow
           workflow-name: ${{ github.workflow }}
           version-info: |
-            $(cat notifications.txt)  # Use the captured notifications directly
+            $(cat notifications.txt | sed 's/^/• /')  # Prepend bullet points for better formatting
