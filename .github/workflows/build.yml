@@ -33,6 +33,9 @@ jobs:
             echo "status=failure" >> $GITHUB_ENV
           fi
 
+      - name: Debug Run URL
+        run: echo "Run URL: ${{ github.run_url }}"  # Verify the URL format
+
       - name: Notify Teams with build status
         uses: ./.github/actions/notify_teams  # Points to the local composite action
         with:
