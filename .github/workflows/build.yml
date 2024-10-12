@@ -1,6 +1,5 @@
 name: Build and Notify
 
-
 on:
   push:
     branches:
@@ -28,33 +27,37 @@ jobs:
           cat ryzenai_pip_list.txt || { echo "Failed to read ryzenai_pip_list.txt"; exit 1; }
 
       - name: Extract required packages with formatting
+        id: capture-notifications
         run: |
           echo "Running grep to filter packages and format output..."
           grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt | sed 's/^/\n&/; s/$/&\n/' > notifications.txt
           
-          # Capture the formatted notifications into a variable
           notifications=$(cat notifications.txt | sed 's/"/\\"/g' | sed 's/^/\\n/' | sed 's/$/\\n/')
-          echo "Captured notifications: $notifications"
-          echo "::set-output name=notifications::$notifications"
+          echo "notifications=$notifications" >> $GITHUB_OUTPUT
 
       - name: Check notifications output
         run: |
           echo "Contents of notifications.txt:"
           cat notifications.txt || { echo "notifications.txt not created or empty"; exit 1; }
 
+      - name: Debug captured notifications
+        run: |
+          echo "Captured notifications:"
+          echo "${{ steps.capture-notifications.outputs.notifications }}"
+
   notify:
     runs-on: ubuntu-latest
-    needs: build # Ensure this job runs after the build job
+    needs: build
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3 # Ensure the repository is checked out again
+        uses: actions/checkout@v3
 
       - name: Notify Teams
         uses: ./.github/actions/notify_teams
         with:
-          overall-status: ${{ needs.build.result }} # Capturing the overall status of the build job
+          overall-status: ${{ needs.build.result }}
           run-url: ${{ github.run_url }}
           action-name: Build
-          workflow-status: ${{ needs.build.result }} # Status of the workflow
+          workflow-status: ${{ needs.build.result }}
           workflow-name: ${{ github.workflow }}
-          version-info: ${{ needs.build.outputs.notifications }} # Use the captured notifications
+          version-info: ${{ needs.build.outputs.notifications }}
