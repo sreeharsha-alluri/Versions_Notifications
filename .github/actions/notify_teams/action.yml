@@ -1,5 +1,5 @@
 name: Notify Teams
-description: Sends a notification to Microsoft Teams with build status.
+description: Sends a notification to Microsoft Teams with build status and version information.
 
 inputs:
   overall-status:
@@ -29,6 +29,9 @@ runs:
       run: |
         WEBHOOK_URL="https://amdcloud.webhook.office.com/webhookb2/133d4f16-689b-4281-a94b-44725b948c77@3dd8961f-e488-4e60-8e11-a82d994e183d/IncomingWebhook/20c43fc799fd49e9813582813c638323/f9e22351-f1c9-494f-88c5-8e04accf2ffe"
 
+        # Escape any potential special characters in version info
+        version_info=$(echo "${{ inputs.version-info }}" | sed 's/"/\\"/g')
+
         if [[ "${{ inputs.overall-status }}" == "failure" ]]; then
           curl -H 'Content-Type: application/json' \
                -d '{
@@ -52,7 +55,7 @@ runs:
                             },
                             {
                               "type": "TextBlock",
-                              "text": "**Version Information:** '"${{ inputs.version-info }}"'",
+                              "text": "**Version Information:**\n'"${version_info}"'",
                               "color": "Attention"
                             }
                           ],
@@ -85,16 +88,16 @@ runs:
                             {
                               "type": "TextBlock",
                               "text": "**Workflow Name:** '"${{ inputs.workflow-name }}"'",
-                              "color": "Good"  
+                              "color": "Good"
                             },
                             {
                               "type": "TextBlock",
                               "text": "**Workflow Status:** '"${{ inputs.workflow-status }}"'",
-                              "color": "Good" 
+                              "color": "Good"
                             },
                             {
                               "type": "TextBlock",
-                              "text": "**Version Information:** '"${{ inputs.version-info }}"'",
+                              "text": "**Version Information:**\n'"${version_info}"'",
                               "color": "Good"
                             }
                           ],
