@@ -18,18 +18,26 @@ jobs:
           # Install your dependencies or environment here if needed
           echo "Installing dependencies"
 
-      - name: Get version info from pip list
+      - name: Generate pip list
         run: |
-          # Use grep to extract required packages and save to a file
           pip list > ryzenai_pip_list.txt
+
+      - name: Check pip list output
+        run: |
+          cat ryzenai_pip_list.txt
+
+      - name: Extract required packages
+        run: |
           grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt > notifications.txt
-          
+
+      - name: Check notifications output
+        run: |
+          cat notifications.txt || echo "notifications.txt not found or empty"
+      
       - name: Read and prepare version info
         id: version-info
         run: |
-          # Read the contents of the notifications.txt file into a single string
           versions=$(<notifications.txt)
-          # Escape newlines for use in GitHub Actions environment variable
           versions="${versions//'%'/%25}"
           versions="${versions//$'\n'/\\n}"
           echo "::set-output name=versions::$versions"
