@@ -48,11 +48,6 @@ runs:
                           },
                           {
                             "type": "TextBlock",
-                            "text": "**Job Name:** '"${{ inputs.action-name }}"'",
-                            "color": "'"$STATUS_COLOR"'"
-                          },
-                          {
-                            "type": "TextBlock",
                             "text": "**Workflow Status:** '"${{ inputs.workflow-status }}"'",
                             "color": "'"$STATUS_COLOR"'"
                           }
