@@ -15,7 +15,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          # Install your dependencies or environment here if needed
           echo "Installing dependencies"
 
       - name: Generate pip list
@@ -24,15 +23,31 @@ jobs:
 
       - name: Check pip list output
         run: |
-          cat ryzenai_pip_list.txt
+          if [ -f ryzenai_pip_list.txt ]; then
+            echo "Contents of ryzenai_pip_list.txt:"
+            cat ryzenai_pip_list.txt
+          else
+            echo "File ryzenai_pip_list.txt does not exist!"
+            exit 1
+          fi
 
       - name: Extract required packages
         run: |
           grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt > notifications.txt
+          if [ $? -ne 0 ]; then
+            echo "Error: grep command failed. Check the input file."
+            exit 1
+          fi
 
       - name: Check notifications output
         run: |
-          cat notifications.txt || echo "notifications.txt not found or empty"
+          if [ -f notifications.txt ]; then
+            echo "Contents of notifications.txt:"
+            cat notifications.txt
+          else
+            echo "File notifications.txt does not exist!"
+            exit 1
+          fi
       
       - name: Read and prepare version info
         id: version-info
