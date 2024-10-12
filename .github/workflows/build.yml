@@ -13,24 +13,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Output pip list
-        run: |
-          echo "Contents of ryzenai_pip_list.txt:"
-          cat ryzenai_pip_list.txt || { echo "Failed to read ryzenai_pip_list.txt"; exit 1; }
-
       - name: Extract required packages with formatting
         id: extract-notifications
         run: |
           echo "Running grep to filter packages and format output..."
-          notifications=$(grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt | sed 's/^/• /; s/$/\n/' | tr -d '\r' | sed '/^$/d')
-
+          # Extract and format notifications, preserving newlines and adding bullet points
+          notifications=$(grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt | sed 's/^/• /; s/$/\n/' | tr -d '\r')
+          
           # Debug output to ensure correct format
           echo "Captured notifications:"
           echo "$notifications"
-
           # Save the notifications to a file for later use
           echo "$notifications" > notifications.txt
-
       - name: Notify Teams
         uses: ./.github/actions/notify_teams
         with:
@@ -40,5 +34,4 @@ jobs:
           workflow-status: ${{ job.status }} # Status of the workflow
           workflow-name: ${{ github.workflow }}
           version-info: |
-            ai analyzer
-            $notifications  # Pass the captured notifications directly
+            $(cat notifications.txt)  # Pass the captured notifications directly
