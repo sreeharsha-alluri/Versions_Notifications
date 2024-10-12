@@ -44,11 +44,6 @@ runs:
                             },
                             {
                               "type": "TextBlock",
-                              "text": "**Job Name:** '"${{ inputs.action-name }}"'",
-                              "color": "Attention"
-                            },
-                            {
-                              "type": "TextBlock",
                               "text": "**Workflow Status:** '"${{ inputs.workflow-status }}"'",
                               "color": "Attention"
                             }
@@ -82,11 +77,6 @@ runs:
                             {
                               "type": "TextBlock",
                               "text": "**Workflow Name:** '"${{ inputs.workflow-name }}"'",
-                              "color": "Good"  
-                            },
-                            {
-                              "type": "TextBlock",
-                              "text": "**Job Name:** '"${{ inputs.action-name }}"'",
                               "color": "Good"  
                             },
                             {
