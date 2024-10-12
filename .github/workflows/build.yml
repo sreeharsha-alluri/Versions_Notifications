@@ -16,34 +16,26 @@ jobs:
       - name: Echo building
         run: echo "Building..."
 
+      - name: Generate the notifications from the pip list
+        run: |
+          grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt > notifications.txt
+
+          # Prepare version information for the notification
+          version_info=$(<notifications.txt)
+          version_info="${version_info//\"/\\\"}"  # Escape double quotes
+          echo "version_info=${version_info}" >> $GITHUB_ENV
+
   notify:
-    needs: build  # This job will wait for 'build' to finish
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code  # Ensures the repository is checked out so the local action can be found
-        uses: actions/checkout@v3
-
-      - name: Capture build status
-        id: capture-status
-        run: |
-          if [ "${{ needs.build.result }}" == "success" ]; then
-            echo "status=success" >> $GITHUB_ENV
-          else
-            echo "status=failure" >> $GITHUB_ENV
-          fi
-
-      - name: Generate Notification Content
-        id: generate-notification
-        run: |
-          # Generate the notifications from the pip list
-          grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt | sed 's/^/\n&/; s/$/&\n/' > notifications.txt
-
-          # Read the contents of notifications.txt into a single variable
-          notifications=$(cat notifications.txt | sed 's/"/\\"/g' | sed 's/^/\\n/' | sed 's/$/\\n/')
-
-          # Prepare the final message
-          final_message="**Workflow Name:** ${{ github.workflow }}\n**Workflow Status:** ${{ needs.build.result }}\n**Versions:**\n$notifications"
-          
-          # Send the notification to Teams
-          curl -H "Content-Type: application/json" -d "{ \"text\": \"${final_message}\" }" "https://amdcloud.webhook.office.com/webhookb2/133d4f16-689b-4281-a94b-44725b948c77@3dd8961f-e488-4e60-8e11-a82d994e183d/IncomingWebhook/20c43fc799fd49e9813582813c638323/f9e22351-f1c9-494f-88c5-8e04accf2ffe"
+      - name: Notify Teams with build status and version info
+        uses: ./.github/actions/notify_teams  # Points to the local composite action
+        with:
+          overall-status: ${{ needs.build.result }}
+          run-url: ${{ github.run_url }}
+          action-name: ${{ job.name }}  # Use the job name dynamically
+          workflow-status: ${{ needs.build.result }}
+          workflow-name: ${{ github.workflow }}
+          version-info: ${{ env.version_info }}
