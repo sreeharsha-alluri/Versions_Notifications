@@ -1,4 +1,4 @@
-name: Build
+name: Build and Notify
 
 on:
   push:
@@ -10,31 +10,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Echo building
-        run: echo "Building..."
-
-      - name: Extract versions from pip list
+      - name: Install dependencies
         run: |
+          # Install your dependencies or environment here if needed
+          echo "Installing dependencies"
+
+      - name: Get version info from pip list
+        run: |
+          # Use grep to extract required packages and save to a file
+          pip list > ryzenai_pip_list.txt
           grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt > notifications.txt
+          
+      - name: Read and prepare version info
+        id: version-info
+        run: |
+          # Read the contents of the notifications.txt file into a single string
+          versions=$(<notifications.txt)
+          # Escape newlines for use in GitHub Actions environment variable
+          versions="${versions//'%'/%25}"
+          versions="${versions//$'\n'/\\n}"
+          echo "::set-output name=versions::$versions"
 
-          # Escape quotes and format for sending
-          version_info=$(<notifications.txt | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
-          echo "::set-output name=version_info::${version_info}"
-
-  notify:
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Notify Teams with build status and version info
-        uses: ./.github/actions/notify_teams  # Points to your composite action
+      - name: Notify Teams
+        uses: ./.github/actions/notify_teams
         with:
-          overall-status: ${{ needs.build.result }}
+          overall-status: ${{ job.status }}
           run-url: ${{ github.run_url }}
-          action-name: ${{ job.name }}
-          workflow-status: ${{ needs.build.result }}
+          action-name: Build
+          workflow-status: ${{ job.status }}
           workflow-name: ${{ github.workflow }}
-          version-info: ${{ steps.build.outputs.version_info }}
+          version-info: ${{ steps.version-info.outputs.versions }}
