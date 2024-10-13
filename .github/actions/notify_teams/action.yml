@@ -18,7 +18,7 @@ inputs:
     description: 'Name of the workflow'
     required: true
   version-info:
-    description: 'Version information to display, newline-separated'
+    description: 'Version information to display, comma-separated'
     required: true
 
 runs:
@@ -35,59 +35,108 @@ runs:
           version_info="No version information available."
         fi
 
-        # Prepare a list of unique version info while ensuring no duplicates for aianalyzer
-        unique_versions=$(echo -e "$version_info" | sort -u | sed '/^$/d; s/^/• /')
+        # Split version info by comma and format it
+        formatted_version_info=$(echo "$version_info" | tr ',' '\n' | sed '/^$/d; s/^/• /')
 
-        # Ensure AI Analyzer version is included only once, if it's not already
-        if ! echo "$unique_versions" | grep -q "• aianalyzer"; then
-          unique_versions="• aianalyzer 1.3.0.dev202410102250+g33080a\n$unique_versions"
-        fi
+        # Ensure AI Analyzer version is included only once
+        aianalyzer_version="• aianalyzer 1.3.0.dev202410102250+g33080a"
+
+        # Combine versions while ensuring no duplicates
+        combined_version_info="$aianalyzer_version\n$formatted_version_info"
 
         # Prepare Teams notification message based on overall status
-        color="Good"
         if [[ "${{ inputs.overall-status }}" == "failure" ]]; then
           color="Attention"
+        else
+          color="Good"
         fi
 
+        # Log the payload being sent to Teams
+        echo "Payload being sent to Teams:"
+        echo '{
+          "type": "message",
+          "attachments": [
+            {
+              "contentType": "application/vnd.microsoft.card.adaptive",
+              "content": {
+                "type": "AdaptiveCard",
+                "version": "1.2",
+                "body": [
+                  {
+                    "type": "TextBlock",
+                    "text": "**Workflow Name:** '"${{ inputs.workflow-name }}"'",
+                    "color": "'"$color"'"
+                  },
+                  {
+                    "type": "TextBlock",
+                    "text": "**Workflow Status:** '"${{ inputs.workflow-status }}"'",
+                    "color": "'"$color"'"
+                  },
+                  {
+                    "type": "TextBlock",
+                    "text": "**Version Information:**\n'"${combined_version_info}"'",
+                    "color": "'"$color"'"
+                  }
+                ],
+                "msteams": {
+                  "width": "Full"
+                },
+                "actions": [
+                  {
+                    "type": "Action.OpenUrl",
+                    "title": "View Run",
+                    "url": "'"${{ inputs.run-url }}"'"
+                  }
+                ]
+              }
+            }
+          ]
+        }'
+
         # Send notification
-        curl -H 'Content-Type: application/json' \
-             -d '{
-                  "type": "message",
-                  "attachments": [
-                    {
-                      "contentType": "application/vnd.microsoft.card.adaptive",
-                      "content": {
-                        "type": "AdaptiveCard",
-                        "version": "1.2",
-                        "body": [
-                          {
-                            "type": "TextBlock",
-                            "text": "**Workflow Name:** '"${{ inputs.workflow-name }}"'",
-                            "color": "'"$color"'"
-                          },
-                          {
-                            "type": "TextBlock",
-                            "text": "**Workflow Status:** '"${{ inputs.workflow-status }}"'",
-                            "color": "'"$color"'"
-                          },
-                          {
-                            "type": "TextBlock",
-                            "text": "**Version Information:**\n'"${unique_versions}"'",
-                            "color": "'"$color"'"
-                          }
-                        ],
-                        "msteams": {
-                          "width": "Full"
-                        },
-                        "actions": [
-                          {
-                            "type": "Action.OpenUrl",
-                            "title": "View Run",
-                            "url": "'"${{ inputs.run-url }}"'"
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                }' \
-             "$WEBHOOK_URL"
+        response=$(curl -s -o /dev/null -w "%{http_code}" -H 'Content-Type: application/json' -d '{
+          "type": "message",
+          "attachments": [
+            {
+              "contentType": "application/vnd.microsoft.card.adaptive",
+              "content": {
+                "type": "AdaptiveCard",
+                "version": "1.2",
+                "body": [
+                  {
+                    "type": "TextBlock",
+                    "text": "**Workflow Name:** '"${{ inputs.workflow-name }}"'",
+                    "color": "'"$color"'"
+                  },
+                  {
+                    "type": "TextBlock",
+                    "text": "**Workflow Status:** '"${{ inputs.workflow-status }}"'",
+                    "color": "'"$color"'"
+                  },
+                  {
+                    "type": "TextBlock",
+                    "text": "**Version Information:**\n'"${combined_version_info}"'",
+                    "color": "'"$color"'"
+                  }
+                ],
+                "msteams": {
+                  "width": "Full"
+                },
+                "actions": [
+                  {
+                    "type": "Action.OpenUrl",
+                    "title": "View Run",
+                    "url": "'"${{ inputs.run-url }}"'"
+                  }
+                ]
+              }
+            }
+          ]
+        }' "$WEBHOOK_URL")
+
+        # Check response code and log the result
+        echo "Response Code: $response"
+        if [[ "$response" -ne 200 ]]; then
+          echo "Failed to send notification. HTTP Response Code: $response"
+          exit 1
+        fi
