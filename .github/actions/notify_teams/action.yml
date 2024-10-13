@@ -30,7 +30,7 @@ runs:
         WEBHOOK_URL="https://amdcloud.webhook.office.com/webhookb2/133d4f16-689b-4281-a94b-44725b948c77@3dd8961f-e488-4e60-8e11-a82d994e183d/IncomingWebhook/20c43fc799fd49e9813582813c638323/f9e22351-f1c9-494f-88c5-8e04accf2ffe"
 
         # Escape potential special characters and handle empty version-info
-        version_info=$(echo "${{ inputs.version-info }}" | sed 's/"/\\"/g; s/\\/\\\\/g; s/\n/\\n/g')
+        version_info=$(echo "${{ inputs.version-info }}" | sed 's/"/\\"/g; s/\\/\\\\/g; s/\n/\\n/g' | sed 's/^[ \t]*//;s/[ \t]*$//')
         if [[ -z "$version_info" ]]; then
           version_info="No version information available."
         fi
