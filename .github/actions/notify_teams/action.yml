@@ -27,7 +27,7 @@ runs:
     - name: Send Notification
       shell: bash
       run: |
-        WEBHOOK_URL="https://amdcloud.webhook.office.com/webhookb2/133d4f16-689b-4281-a94b-44725b948c77@3dd8961f-e488-4e60-8e11-a82d994e183d/IncomingWebhook/20c43fc799fd49e9813582813c638323/f9e22351-f1c9-494f-88c5-8e04accf2ffe"
+        WEBHOOK_URL="https://amdcloud.webhook.office.com/webhookb2/..."
 
         # Escape potential special characters and handle empty version-info
         version_info=$(echo "${{ inputs.version-info }}" | sed 's/^[ \t]*//;s/[ \t]*$//')
@@ -35,8 +35,8 @@ runs:
           version_info="No version information available."
         fi
 
-        # Split version info by comma and format it
-        formatted_version_info=$(echo "$version_info" | tr ',' '\n' | sed '/^$/d; s/^/• /')
+        # Split version info by comma, sort, and remove duplicates while formatting it
+        formatted_version_info=$(echo "$version_info" | tr ',' '\n' | awk '!seen[$0]++' | sed '/^$/d; s/^/• /')
 
         # Ensure AI Analyzer version is included only once
         aianalyzer_version="• aianalyzer 1.3.0.dev202410102250+g33080a"
