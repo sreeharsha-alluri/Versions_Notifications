@@ -32,6 +32,13 @@ runs:
         # Clean up version_info to remove extra newlines, replace with \n\n for line breaks
         version_info=$(echo "${{ inputs.version-info }}" | sed 's/\n/\n\n/g')
 
+        # Remove duplicate entries
+        version_info=$(echo "$version_info" | awk '!seen[$0]++')
+
+        # Remove first line from version_info
+        version_info=$(echo "$version_info" | sed '1d')
+
+        # Check if version_info is empty
         if [[ -z "$version_info" ]]; then
           version_info="No version information available."
         fi
@@ -44,8 +51,10 @@ runs:
           notifications="No relevant notifications available."
         fi
 
-        # Add AI analyzer information
-        notifications+="ai analyzer\n\naianalyzer\n1.3.0.dev202410102250+g33080a\n\n"
+        # Add AI analyzer information, but prevent duplicates
+        if ! echo "$notifications" | grep -q "aianalyzer"; then
+          notifications+="aianalyzer\n1.3.0.dev202410102250+g33080a\n\n"
+        fi
 
         # Send notification based on overall status
         if [[ "${{ inputs.overall-status }}" == "failure" ]]; then
