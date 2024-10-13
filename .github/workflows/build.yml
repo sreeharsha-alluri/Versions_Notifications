@@ -30,7 +30,7 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
 
       - name: Notify Teams
-        uses: ./path/to/your/action
+        uses: ./.github/actions/notify_teams
         with:
           overall-status: ${{ job.status }}
           run-url: ${{ github.run_url }}
