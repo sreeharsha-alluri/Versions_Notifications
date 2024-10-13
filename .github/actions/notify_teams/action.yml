@@ -1,6 +1,7 @@
 name: Notify Teams
 description: Sends a notification to Microsoft Teams with build status and version information.
 
+
 inputs:
   overall-status:
     description: 'Overall status of the build (success or failure)'
