@@ -36,88 +36,56 @@ runs:
           version_info="No version information available."
         fi
 
+        # Determine color based on the overall status
         if [[ "${{ inputs.overall-status }}" == "failure" ]]; then
-          curl -H 'Content-Type: application/json' \
-               -d '{
-                    "type": "message",
-                    "attachments": [
-                      {
-                        "contentType": "application/vnd.microsoft.card.adaptive",
-                        "content": {
-                          "type": "AdaptiveCard",
-                          "version": "1.2",
-                          "body": [
-                            {
-                              "type": "TextBlock",
-                              "text": "**Workflow Name:** '"${{ inputs.workflow-name }}"'",
-                              "color": "Attention"
-                            },
-                            {
-                              "type": "TextBlock",
-                              "text": "**Workflow Status:** '"${{ inputs.workflow-status }}"'",
-                              "color": "Attention"
-                            },
-                            {
-                              "type": "TextBlock",
-                              "text": "**Version Information:**\n'"${version_info}"'",
-                              "color": "Attention"
-                            }
-                          ],
-                          "msteams": {
-                            "width": "Full"
-                          },
-                          "actions": [
-                            {
-                              "type": "Action.OpenUrl",
-                              "title": "View Run",
-                              "url": "'"${{ inputs.run-url }}"'"
-                            }
-                          ]
-                        }
-                      }
-                    ]
-                  }' \
-               "$WEBHOOK_URL"
+          color="Attention"
         else
-          curl -H 'Content-Type: application/json' \
-               -d '{
-                    "type": "message",
-                    "attachments": [
-                      {
-                        "contentType": "application/vnd.microsoft.card.adaptive",
-                        "content": {
-                          "type": "AdaptiveCard",
-                          "version": "1.2",
-                          "body": [
-                            {
-                              "type": "TextBlock",
-                              "text": "**Workflow Name:** '"${{ inputs.workflow-name }}"'",
-                              "color": "Good"
-                            },
-                            {
-                              "type": "TextBlock",
-                              "text": "**Workflow Status:** '"${{ inputs.workflow-status }}"'",
-                              "color": "Good"
-                            },
-                            {
-                              "type": "TextBlock",
-                              "text": "**Version Information:**\n'"${version_info}"'",
-                              "color": "Good"
-                            }
-                          ],
-                          "msteams": {
-                            "width": "Full"
-                          },
-                          "actions": [
-                            {
-                              "type": "Action.OpenUrl",
-                              "title": "View Run",
-                              "url": "'"${{ inputs.run-url }}"'"
-                            }
-                          ]
-                        }
-                      }
-                    ]
-                  }' \
-               "$WEBHOOK_URL"
+          color="Good"
         fi
+
+        # Generate the payload for the notification
+        payload=$(cat <<EOF
+{
+  "type": "message",
+  "attachments": [
+    {
+      "contentType": "application/vnd.microsoft.card.adaptive",
+      "content": {
+        "type": "AdaptiveCard",
+        "version": "1.2",
+        "body": [
+          {
+            "type": "TextBlock",
+            "text": "**Workflow Name:** ${workflow-name}",
+            "color": "${color}"
+          },
+          {
+            "type": "TextBlock",
+            "text": "**Workflow Status:** ${workflow-status}",
+            "color": "${color}"
+          },
+          {
+            "type": "TextBlock",
+            "text": "**Version Information:**\n${version_info}",
+            "color": "${color}"
+          }
+        ],
+        "msteams": {
+          "width": "Full"
+        },
+        "actions": [
+          {
+            "type": "Action.OpenUrl",
+            "title": "View Run",
+            "url": "${{ inputs.run-url }}"
+          }
+        ]
+      }
+    }
+  ]
+}
+EOF
+        )
+
+        # Send the payload to Microsoft Teams
+        curl -H 'Content-Type: application/json' -d "$payload" "$WEBHOOK_URL"
