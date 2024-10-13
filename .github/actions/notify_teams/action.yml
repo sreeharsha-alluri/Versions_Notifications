@@ -29,11 +29,11 @@ runs:
       run: |
         WEBHOOK_URL="https://amdcloud.webhook.office.com/webhookb2/133d4f16-689b-4281-a94b-44725b948c77@3dd8961f-e488-4e60-8e11-a82d994e183d/IncomingWebhook/20c43fc799fd49e9813582813c638323/f9e22351-f1c9-494f-88c5-8e04accf2ffe"
 
-        # Escape special characters and ensure proper formatting for newlines
+        # Escape special characters in the version-info input
         version_info=$(echo "${{ inputs.version-info }}" | sed 's/"/\\"/g')
 
-        # Format version_info by replacing each newline with an actual newline for JSON
-        version_info=$(echo "$version_info" | sed ':a;N;$!ba;s/\n/\\n/g')
+        # Ensure newlines are preserved correctly for JSON
+        version_info=$(echo "$version_info" | sed 's/$/\\n/g')
 
         if [[ -z "$version_info" ]]; then
           version_info="No version information available."
