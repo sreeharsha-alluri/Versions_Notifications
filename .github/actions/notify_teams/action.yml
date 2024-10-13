@@ -35,14 +35,6 @@ runs:
           version_info="No version information available."
         fi
 
-        # Create a table in Markdown format
-        table_rows=""
-        while IFS= read -r line; do
-          package_name=$(echo "$line" | awk '{print $1}')
-          version=$(echo "$line" | awk '{print $2}')
-          table_rows+=$(printf "| %-30s | %-30s |\n" "$package_name" "$version")
-        done <<< "$version_info"
-
         # Create the message body
         message_body=$(cat <<EOF
 {
@@ -70,33 +62,11 @@ runs:
             "wrap": true
           },
           {
-            "type": "ColumnSet",
-            "columns": [
-              {
-                "type": "Column",
-                "width": "50",
-                "items": [
-                  {
-                    "type": "TextBlock",
-                    "text": "Package",
-                    "weight": "Bolder"
-                  },
-                  $table_rows
-                ]
-              },
-              {
-                "type": "Column",
-                "width": "50",
-                "items": [
-                  {
-                    "type": "TextBlock",
-                    "text": "Version",
-                    "weight": "Bolder"
-                  },
-                  $table_rows
-                ]
-              }
-            ]
+            "type": "TextBlock",
+            "text": "$(
+              echo "$version_info" | awk '{ printf "| %-30s | %-30s |\n", \$1, \$2 }' | sed '1i| Package Name                   | Version                        |' | sed 's/^/| /'
+            )",
+            "wrap": true
           }
         ],
         "msteams": {
