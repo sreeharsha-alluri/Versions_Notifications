@@ -29,114 +29,61 @@ runs:
       run: |
         WEBHOOK_URL="https://amdcloud.webhook.office.com/webhookb2/133d4f16-689b-4281-a94b-44725b948c77@3dd8961f-e488-4e60-8e11-a82d994e183d/IncomingWebhook/20c43fc799fd49e9813582813c638323/f9e22351-f1c9-494f-88c5-8e04accf2ffe"
 
-        # Escape potential special characters and handle empty version-info
+        # Prepare and escape version info
         version_info=$(echo "${{ inputs.version-info }}" | sed 's/^[ \t]*//;s/[ \t]*$//')
         if [[ -z "$version_info" ]]; then
           version_info="No version information available."
         fi
 
-        # Split version info by comma, sort, and remove duplicates while formatting it
-        formatted_version_info=$(echo "$version_info" | tr ',' '\n' | awk '!seen[$0]++' | sed '/^$/d; s/^/• /')
+        # Split version info by comma and format it
+        formatted_version_info=$(echo "$version_info" | tr ',' '\n' | sed '/^$/d; s/^/• /')
 
         # Ensure AI Analyzer version is included only once
         aianalyzer_version="• aianalyzer 1.3.0.dev202410102250+g33080a"
-
-        # Combine versions while ensuring no duplicates
         combined_version_info="$aianalyzer_version\n$formatted_version_info"
 
-        # Prepare Teams notification message based on overall status
-        if [[ "${{ inputs.overall-status }}" == "failure" ]]; then
-          color="Attention"
-        else
-          color="Good"
-        fi
-
-        # Log the payload being sent to Teams
-        echo "Payload being sent to Teams:"
-        echo '{
-          "type": "message",
-          "attachments": [
-            {
-              "contentType": "application/vnd.microsoft.card.adaptive",
-              "content": {
-                "type": "AdaptiveCard",
-                "version": "1.2",
-                "body": [
-                  {
-                    "type": "TextBlock",
-                    "text": "**Workflow Name:** '"${{ inputs.workflow-name }}"'",
-                    "color": "'"$color"'"
-                  },
-                  {
-                    "type": "TextBlock",
-                    "text": "**Workflow Status:** '"${{ inputs.workflow-status }}"'",
-                    "color": "'"$color"'"
-                  },
-                  {
-                    "type": "TextBlock",
-                    "text": "**Version Information:**\n'"${combined_version_info}"'",
-                    "color": "'"$color"'"
-                  }
-                ],
-                "msteams": {
-                  "width": "Full"
-                },
-                "actions": [
-                  {
-                    "type": "Action.OpenUrl",
-                    "title": "View Run",
-                    "url": "'"${{ inputs.run-url }}"'"
-                  }
-                ]
-              }
-            }
-          ]
-        }'
+        # Set notifications using C shell format
+        set notifications=`cat notifications.txt | sed 's/"/\\"/g'`
 
         # Send notification
-        response=$(curl -s -o /dev/null -w "%{http_code}" -H 'Content-Type: application/json' -d '{
-          "type": "message",
-          "attachments": [
-            {
-              "contentType": "application/vnd.microsoft.card.adaptive",
-              "content": {
-                "type": "AdaptiveCard",
-                "version": "1.2",
-                "body": [
-                  {
-                    "type": "TextBlock",
-                    "text": "**Workflow Name:** '"${{ inputs.workflow-name }}"'",
-                    "color": "'"$color"'"
-                  },
-                  {
-                    "type": "TextBlock",
-                    "text": "**Workflow Status:** '"${{ inputs.workflow-status }}"'",
-                    "color": "'"$color"'"
-                  },
-                  {
-                    "type": "TextBlock",
-                    "text": "**Version Information:**\n'"${combined_version_info}"'",
-                    "color": "'"$color"'"
-                  }
-                ],
-                "msteams": {
-                  "width": "Full"
-                },
-                "actions": [
-                  {
-                    "type": "Action.OpenUrl",
-                    "title": "View Run",
-                    "url": "'"${{ inputs.run-url }}"'"
-                  }
-                ]
-              }
-            }
-          ]
-        }' "$WEBHOOK_URL")
-
-        # Check response code and log the result
-        echo "Response Code: $response"
-        if [[ "$response" -ne 200 ]]; then
-          echo "Failed to send notification. HTTP Response Code: $response"
-          exit 1
-        fi
+        curl -H 'Content-Type: application/json' \
+             -d '{
+                  "type": "message",
+                  "attachments": [
+                    {
+                      "contentType": "application/vnd.microsoft.card.adaptive",
+                      "content": {
+                        "type": "AdaptiveCard",
+                        "version": "1.2",
+                        "body": [
+                          {
+                            "type": "TextBlock",
+                            "text": "**Workflow Name:** '"${{ inputs.workflow-name }}"'",
+                            "color": "Good"
+                          },
+                          {
+                            "type": "TextBlock",
+                            "text": "**Workflow Status:** '"${{ inputs.workflow-status }}"'",
+                            "color": "Good"
+                          },
+                          {
+                            "type": "TextBlock",
+                            "text": "**Version Information:**\n'"${combined_version_info}"'",
+                            "color": "Good"
+                          }
+                        ],
+                        "msteams": {
+                          "width": "Full"
+                        },
+                        "actions": [
+                          {
+                            "type": "Action.OpenUrl",
+                            "title": "View Run",
+                            "url": "'"${{ inputs.run-url }}"'"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }' \
+             "$WEBHOOK_URL"
