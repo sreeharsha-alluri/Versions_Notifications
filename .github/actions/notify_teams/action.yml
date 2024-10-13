@@ -35,8 +35,11 @@ runs:
           version_info="No version information available."
         fi
 
-        # Format version info for Teams message with bullet points
-        formatted_version_info=$(echo "$version_info" | sed 's/^/• /; s/$/\n/')
+        # Format version info for Teams message, ensuring each line is prefixed with bullet points
+        formatted_version_info=$(echo "$version_info" | sed '/^$/d; s/^/• /')
+
+        # Add AI Analyzer information directly
+        aianalyzer_info="• aianalyzer 1.3.0.dev202410102250+g33080a"
 
         # Prepare Teams notification message based on overall status
         if [[ "${{ inputs.overall-status }}" == "failure" ]]; then
@@ -45,6 +48,7 @@ runs:
           color="Good"
         fi
 
+        # Send notification
         curl -H 'Content-Type: application/json' \
              -d '{
                   "type": "message",
@@ -67,7 +71,7 @@ runs:
                           },
                           {
                             "type": "TextBlock",
-                            "text": "**Version Information:**\n'"${formatted_version_info}"'",
+                            "text": "**Version Information:**\n'"${aianalyzer_info}"'\n'"${formatted_version_info}"'",
                             "color": "'"$color"'"
                           }
                         ],
