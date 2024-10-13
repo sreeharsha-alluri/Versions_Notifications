@@ -18,7 +18,7 @@ inputs:
     description: 'Name of the workflow'
     required: true
   version-info:
-    description: 'Version information to display, comma-separated'
+    description: 'Version information to display, newline-separated'
     required: true
 
 runs:
@@ -27,7 +27,7 @@ runs:
     - name: Send Notification
       shell: bash
       run: |
-        WEBHOOK_URL="https://amdcloud.webhook.office.com/webhookb2/133d4f16-689b-4281-a94b-44725b948c77@3dd8961f-e488-4e60-8e11-a82d994e183d/IncomingWebhook/20c43fc799fd49e9813582813c638323/f9e22351-f1c9-494f-88c5-8e04accf2ffe"
+        WEBHOOK_URL="https://amdcloud.webhook.office.com/webhookb2/..."
 
         # Escape potential special characters and handle empty version-info
         version_info=$(echo "${{ inputs.version-info }}" | sed 's/^[ \t]*//;s/[ \t]*$//')
@@ -35,20 +35,18 @@ runs:
           version_info="No version information available."
         fi
 
-        # Split version info by comma and format it
-        formatted_version_info=$(echo "$version_info" | tr ',' '\n' | sed '/^$/d; s/^/• /')
+        # Prepare a list of unique version info while ensuring no duplicates for aianalyzer
+        unique_versions=$(echo -e "$version_info" | sort -u | sed '/^$/d; s/^/• /')
 
-        # Ensure AI Analyzer version is included only once
-        aianalyzer_version="• aianalyzer 1.3.0.dev202410102250+g33080a"
-
-        # Combine versions while ensuring no duplicates
-        combined_version_info="$aianalyzer_version\n$formatted_version_info"
+        # Ensure AI Analyzer version is included only once, if it's not already
+        if ! echo "$unique_versions" | grep -q "• aianalyzer"; then
+          unique_versions="• aianalyzer 1.3.0.dev202410102250+g33080a\n$unique_versions"
+        fi
 
         # Prepare Teams notification message based on overall status
+        color="Good"
         if [[ "${{ inputs.overall-status }}" == "failure" ]]; then
           color="Attention"
-        else
-          color="Good"
         fi
 
         # Send notification
@@ -74,7 +72,7 @@ runs:
                           },
                           {
                             "type": "TextBlock",
-                            "text": "**Version Information:**\n'"${combined_version_info}"'",
+                            "text": "**Version Information:**\n'"${unique_versions}"'",
                             "color": "'"$color"'"
                           }
                         ],
