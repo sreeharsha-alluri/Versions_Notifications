@@ -30,7 +30,7 @@ runs:
         WEBHOOK_URL="https://amdcloud.webhook.office.com/webhookb2/133d4f16-689b-4281-a94b-44725b948c77@3dd8961f-e488-4e60-8e11-a82d994e183d/IncomingWebhook/20c43fc799fd49e9813582813c638323/f9e22351-f1c9-494f-88c5-8e04accf2ffe"
 
         # Clean up version_info to remove extra newlines, replace with \n\n for line breaks
-        version_info=$(echo "${{ inputs.version-info }}" | sed 's/\n/\n\n/g; s/ \+/\n\n/g')
+        version_info=$(echo "${{ inputs.version-info }}" | sed 's/\n/\n\n/g')
 
         if [[ -z "$version_info" ]]; then
           version_info="No version information available."
@@ -38,8 +38,16 @@ runs:
 
         # Capture required notifications
         notifications=$(grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt | sed 's/^/ /; s/$/\n\n/' | tr -d '\r' | sed '/^$/d')
-        notifications+="\n\nai analyzer\n\naianalyzer\n1.3.0.dev202410102250+g33080a"
 
+        # Check if notifications is empty
+        if [[ -z "$notifications" ]]; then
+          notifications="No relevant notifications available."
+        fi
+
+        # Add AI analyzer information
+        notifications+="ai analyzer\n\naianalyzer\n1.3.0.dev202410102250+g33080a\n\n"
+
+        # Send notification based on overall status
         if [[ "${{ inputs.overall-status }}" == "failure" ]]; then
           curl -H 'Content-Type: application/json' \
                -d '{
@@ -63,7 +71,7 @@ runs:
                             },
                             {
                               "type": "TextBlock",
-                              "text": "**Version Information:** '"${notifications}${version_info}"'",
+                              "text": "**Version Information:**\n\n'"${notifications}${version_info}"'",
                               "color": "Attention"
                             }
                           ],
@@ -105,7 +113,7 @@ runs:
                             },
                             {
                               "type": "TextBlock",
-                              "text": "**Version Information:** '"${notifications}${version_info}"'",
+                              "text": "**Version Information:**\n\n'"${notifications}${version_info}"'",
                               "color": "Good"
                             }
                           ],
