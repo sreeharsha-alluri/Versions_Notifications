@@ -21,9 +21,9 @@ jobs:
           notifications=$(grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt | sed 's/^/ /; s/$/\n/' | tr -d '\r')
           # Debug output to ensure correct format
           echo "Captured notifications:"
-          echo "$notifications"
+          echo -e "$notifications"  # Use echo -e to interpret escape sequences
           # Save the notifications to a file for later use
-          echo "$notifications" > notifications.txt
+          echo -e "\n$notifications" > notifications.txt  # Add newline before the notifications
       - name: Notify Teams
         uses: ./.github/actions/notify_teams
         with:
@@ -33,4 +33,4 @@ jobs:
           workflow-status: ${{ job.status }}  # Status of the workflow
           workflow-name: ${{ github.workflow }}
           version-info: |
-            $(cat notifications.txt)
+            $(cat notifications.txt)  # No need to modify here
