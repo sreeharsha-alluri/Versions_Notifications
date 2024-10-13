@@ -17,16 +17,15 @@ jobs:
         id: extract-notifications
         run: |
           echo "Running grep to filter packages and format output"
-          # Extract and format notifications, preserving newlines and adding bullet points
-          notifications=$(grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt | sed 's/^/ /; s/$/\n/' | tr -d '\r')
+          # Extract and format notifications with padding for alignment
+          notifications=$(grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt | awk '{printf "%-40s %s\n", $1, $2}' | tr -d '\r')
           # Debug output to ensure correct format
           echo "Captured notifications:"
           echo -e "$notifications"  # Use echo -e to interpret escape sequences
           # Save the notifications to a file for later use
           echo -e "\n$notifications" > notifications.txt  # Add newline before the notifications
-          exit 1
+
       - name: Notify Teams
-        if: always()
         uses: ./.github/actions/notify_teams
         with:
           overall-status: ${{ job.status }}  # Capturing the overall status of the build job
@@ -35,4 +34,4 @@ jobs:
           workflow-status: ${{ job.status }}  # Status of the workflow
           workflow-name: ${{ github.workflow }}
           version-info: |
-            $(cat notifications.txt)
+            $(cat notifications.txt)  # No need to modify here
