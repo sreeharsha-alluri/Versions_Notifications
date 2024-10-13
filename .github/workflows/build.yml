@@ -24,7 +24,9 @@ jobs:
           echo -e "$notifications"  # Use echo -e to interpret escape sequences
           # Save the notifications to a file for later use
           echo -e "\n$notifications" > notifications.txt  # Add newline before the notifications
+          exit 1
       - name: Notify Teams
+        if: always()
         uses: ./.github/actions/notify_teams
         with:
           overall-status: ${{ job.status }}  # Capturing the overall status of the build job
