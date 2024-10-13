@@ -35,8 +35,8 @@ runs:
           version_info="No version information available."
         fi
 
-        # Format version_info to ensure each entry is on a new line
-        version_info_formatted=$(echo "$version_info" | sed 's/^/• /') # Add bullet point for clarity
+        # Format version_info to ensure each entry is on a new line with bullet point
+        version_info_formatted=$(echo "$version_info" | sed 's/^/• /;s/ \+/ /g' | tr '\n' '\n') # Add bullet point and ensure spaces are single
 
         if [[ "${{ inputs.overall-status }}" == "failure" ]]; then
           curl -H 'Content-Type: application/json' \
