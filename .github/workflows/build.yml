@@ -1,36 +1,122 @@
-name: Build and Notify
+name: Notify Teams
+description: Sends a notification to Microsoft Teams with build status and version information.
 
-on:
-  push:
-    branches:
-      - main
+inputs:
+  overall-status:
+    description: 'Overall status of the build (success or failure)'
+    required: true
+  run-url:
+    description: 'URL to the GitHub Actions run'
+    required: true
+  action-name:
+    description: 'Name of the job or action'
+    required: true
+  workflow-status:
+    description: 'Status of the workflow'
+    required: true
+  workflow-name:
+    description: 'Name of the workflow'
+    required: true
+  version-info:
+    description: 'Version information to display'
+    required: true
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+runs:
+  using: "composite"
+  steps:
+    - name: Send Notification
+      shell: bash
+      run: |
+        WEBHOOK_URL="https://amdcloud.webhook.office.com/webhookb2/133d4f16-689b-4281-a94b-44725b948c77@3dd8961f-e488-4e60-8e11-a82d994e183d/IncomingWebhook/20c43fc799fd49e9813582813c638323/f9e22351-f1c9-494f-88c5-8e04accf2ffe"
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+        # Escape potential special characters and handle empty version-info
+        version_info=$(echo "${{ inputs.version-info }}" | sed 's/"/\\"/g; s/\\/\\\\/g; s/\n/\\n/g')
+        if [[ -z "$version_info" ]]; then
+          version_info="No version information available."
+        fi
 
-      - name: Extract required packages with formatting
-        id: extract-notifications
-        run: |
-          echo "Running grep to filter packages and format output"
-          # Extract and format notifications, preserving newlines and adding bullet points
-          notifications=$(grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt | sed 's/^/ /; s/$/\n/' | tr -d '\r')
-          # Debug output to ensure correct format
-          echo "Captured notifications:"
-          echo "$notifications"
-          # Save the notifications to a file for later use
-          echo "$notifications" > notifications.txt
-      - name: Notify Teams
-        uses: ./.github/actions/notify_teams
-        with:
-          overall-status: ${{ job.status }}  # Capturing the overall status of the build job
-          run-url: ${{ github.run_url }}
-          action-name: Build
-          workflow-status: ${{ job.status }}  # Status of the workflow
-          workflow-name: ${{ github.workflow }}
-          version-info: |
-            $(cat notifications.txt)
+        if [[ "${{ inputs.overall-status }}" == "failure" ]]; then
+          curl -H 'Content-Type: application/json' \
+               -d '{
+                    "type": "message",
+                    "attachments": [
+                      {
+                        "contentType": "application/vnd.microsoft.card.adaptive",
+                        "content": {
+                          "type": "AdaptiveCard",
+                          "version": "1.2",
+                          "body": [
+                            {
+                              "type": "TextBlock",
+                              "text": "**Workflow Name:** '"${{ inputs.workflow-name }}"'",
+                              "color": "Attention"
+                            },
+                            {
+                              "type": "TextBlock",
+                              "text": "**Workflow Status:** '"${{ inputs.workflow-status }}"'",
+                              "color": "Attention"
+                            },
+                            {
+                              "type": "TextBlock",
+                              "text": "**Version Information:**\n'"${version_info}"'",
+                              "color": "Attention"
+                            }
+                          ],
+                          "msteams": {
+                            "width": "Full"
+                          },
+                          "actions": [
+                            {
+                              "type": "Action.OpenUrl",
+                              "title": "View Run",
+                              "url": "'"${{ inputs.run-url }}"'"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }' \
+               "$WEBHOOK_URL"
+        else
+          curl -H 'Content-Type: application/json' \
+               -d '{
+                    "type": "message",
+                    "attachments": [
+                      {
+                        "contentType": "application/vnd.microsoft.card.adaptive",
+                        "content": {
+                          "type": "AdaptiveCard",
+                          "version": "1.2",
+                          "body": [
+                            {
+                              "type": "TextBlock",
+                              "text": "**Workflow Name:** '"${{ inputs.workflow-name }}"'",
+                              "color": "Good"
+                            },
+                            {
+                              "type": "TextBlock",
+                              "text": "**Workflow Status:** '"${{ inputs.workflow-status }}"'",
+                              "color": "Good"
+                            },
+                            {
+                              "type": "TextBlock",
+                              "text": "**Version Information:**\n'"${version_info}"'",
+                              "color": "Good"
+                            }
+                          ],
+                          "msteams": {
+                            "width": "Full"
+                          },
+                          "actions": [
+                            {
+                              "type": "Action.OpenUrl",
+                              "title": "View Run",
+                              "url": "'"${{ inputs.run-url }}"'"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }' \
+               "$WEBHOOK_URL"
+        fi
