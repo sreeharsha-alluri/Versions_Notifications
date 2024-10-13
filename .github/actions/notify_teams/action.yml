@@ -29,13 +29,13 @@ runs:
       run: |
         WEBHOOK_URL="https://amdcloud.webhook.office.com/webhookb2/133d4f16-689b-4281-a94b-44725b948c77@3dd8961f-e488-4e60-8e11-a82d994e183d/IncomingWebhook/20c43fc799fd49e9813582813c638323/f9e22351-f1c9-494f-88c5-8e04accf2ffe"
 
-        # Escape potential special characters and handle empty version-info
+        # Escape potential special characters
         version_info=$(echo "${{ inputs.version-info }}" | sed 's/^[ \t]*//;s/[ \t]*$//')
         if [[ -z "$version_info" ]]; then
           version_info="No version information available."
         fi
 
-        # Create the message body
+        # Create the message body as a JSON object
         message_body=$(cat <<EOF
 {
   "type": "message",
@@ -48,12 +48,12 @@ runs:
         "body": [
           {
             "type": "TextBlock",
-            "text": "**Workflow Name:** ${workflow-name}",
+            "text": "**Workflow Name:** ${{ inputs.workflow-name }}",
             "color": "${{ inputs.overall-status }}" == "failure" ? "Attention" : "Good"
           },
           {
             "type": "TextBlock",
-            "text": "**Workflow Status:** ${workflow-status}",
+            "text": "**Workflow Status:** ${{ inputs.workflow-status }}",
             "color": "${{ inputs.overall-status }}" == "failure" ? "Attention" : "Good"
           },
           {
@@ -63,9 +63,7 @@ runs:
           },
           {
             "type": "TextBlock",
-            "text": "$(
-              echo "$version_info" | awk '{ printf "| %-30s | %-30s |\n", \$1, \$2 }' | sed '1i| Package Name                   | Version                        |' | sed 's/^/| /'
-            )",
+            "text": "$version_info",
             "wrap": true
           }
         ],
