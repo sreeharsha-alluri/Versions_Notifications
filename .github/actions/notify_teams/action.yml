@@ -59,7 +59,7 @@ runs:
                             },
                             {
                               "type": "TextBlock",
-                              "text": "**Version Information:**<br>'"${version_info}"'",
+                              "text": "**Version Information:**'"${version_info}"'",
                               "color": "Attention"
                             }
                           ],
