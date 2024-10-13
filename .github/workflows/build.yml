@@ -10,33 +10,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      - name: Extract required packages with formatting
-        id: extract-notifications
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Tests
+        run: pytest
+
+      - name: Collect Version Info
         run: |
-          echo "Running grep to filter packages and format output"
-          # Extract and format notifications, preserving newlines and adding bullet points
-          notifications=$(grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt | sed 's/^/• /; s/$/\n/' | tr -d '\r')
-
-          # Debug output to ensure correct format
-          echo "Captured notifications:"
-          echo "$notifications"
+          pip list | grep -e '^ai\|^on\|^mic\|^flex\|^torch' > notifications.txt
           
-          # Remove duplicates while preserving order
-          unique_notifications=$(echo "$notifications" | awk '!seen[$0]++')
+          # Set notifications variable in C shell
+          set notifications=`cat notifications.txt | sed 's/"/\\"/g'`
 
-          # Save the unique notifications to a file for later use
-          echo "$unique_notifications" > notifications.txt
+  notify:
+    runs-on: ubuntu-latest
+    needs: build
 
+    steps:
       - name: Notify Teams
         uses: ./.github/actions/notify_teams
         with:
-          overall-status: ${{ job.status }}  # Capturing the overall status of the build job
+          overall-status: ${{ job.status }}
           run-url: ${{ github.run_url }}
-          action-name: Build
-          workflow-status: ${{ job.status }}  # Status of the workflow
-          workflow-name: ${{ github.workflow }}
-          version-info: |
-            $(cat notifications.txt)
+          action-name: 'Build and Notify'
+          workflow-status: ${{ job.status }}
+          workflow-name: 'Build and Notify'
+          version-info: ${{ steps.collect-version.outputs.notifications }}
