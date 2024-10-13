@@ -22,8 +22,8 @@ jobs:
           # Debug output to ensure correct format
           echo "Captured notifications:"
           echo -e "$notifications"  # Use echo -e to interpret escape sequences
-          # Save the notifications to a file for later use
-          echo -e "\n$notifications" > notifications.txt  # Add newline before the notifications
+          # Save the notifications to a file for later use, separating with new lines
+          echo -e "\n$notifications\n" > notifications.txt  # Add newline before and after the notifications
 
       - name: Notify Teams
         uses: ./.github/actions/notify_teams
@@ -34,4 +34,4 @@ jobs:
           workflow-status: ${{ job.status }}  # Status of the workflow
           workflow-name: ${{ github.workflow }}
           version-info: |
-            $(cat notifications.txt)  # No need to modify here
+            $(cat notifications.txt | tr '\n' '\n')
