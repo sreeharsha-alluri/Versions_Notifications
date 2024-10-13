@@ -36,7 +36,8 @@ runs:
         fi
 
         # Format version_info to ensure each entry is on a new line with bullet point
-        version_info_formatted=$(echo "$version_info" | sed 's/^/• /;s/ \+/ /g' | tr '\n' '\n') # Add bullet point and ensure spaces are single
+        version_info_formatted=$(echo "$version_info" | sed 's/ /\
+• /g' | sed 's/^/• /') # Add bullet point to the start of the first line and to each space
 
         if [[ "${{ inputs.overall-status }}" == "failure" ]]; then
           curl -H 'Content-Type: application/json' \
