@@ -18,7 +18,7 @@ inputs:
     description: 'Name of the workflow'
     required: true
   version-info:
-    description: 'Version information to display'
+    description: 'Version information to display, comma-separated'
     required: true
 
 runs:
@@ -35,14 +35,14 @@ runs:
           version_info="No version information available."
         fi
 
-        # Format version info for Teams message, ensuring each line is prefixed with bullet points
-        formatted_version_info=$(echo "$version_info" | sed '/^$/d; s/^/• /')
+        # Split version info by comma and format it
+        formatted_version_info=$(echo "$version_info" | tr ',' '\n' | sed '/^$/d; s/^/• /')
 
         # Ensure AI Analyzer version is included only once
         aianalyzer_version="• aianalyzer 1.3.0.dev202410102250+g33080a"
 
-        # Combine versions while preventing duplicates
-        combined_version_info="${aianalyzer_version}\n${formatted_version_info}" 
+        # Combine versions while ensuring no duplicates
+        combined_version_info="$aianalyzer_version\n$formatted_version_info"
 
         # Prepare Teams notification message based on overall status
         if [[ "${{ inputs.overall-status }}" == "failure" ]]; then
