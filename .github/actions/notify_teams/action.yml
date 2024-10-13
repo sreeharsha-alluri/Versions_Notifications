@@ -38,8 +38,11 @@ runs:
         # Format version info for Teams message, ensuring each line is prefixed with bullet points
         formatted_version_info=$(echo "$version_info" | sed '/^$/d; s/^/• /')
 
-        # Add AI Analyzer information directly
-        aianalyzer_info="• aianalyzer 1.3.0.dev202410102250+g33080a"
+        # Ensure AI Analyzer version is included only once
+        aianalyzer_version="• aianalyzer 1.3.0.dev202410102250+g33080a"
+
+        # Combine versions while preventing duplicates
+        combined_version_info="${aianalyzer_version}\n${formatted_version_info}" 
 
         # Prepare Teams notification message based on overall status
         if [[ "${{ inputs.overall-status }}" == "failure" ]]; then
@@ -71,7 +74,7 @@ runs:
                           },
                           {
                             "type": "TextBlock",
-                            "text": "**Version Information:**\n'"${aianalyzer_info}"'\n'"${formatted_version_info}"'",
+                            "text": "**Version Information:**\n'"${combined_version_info}"'",
                             "color": "'"$color"'"
                           }
                         ],
