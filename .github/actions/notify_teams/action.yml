@@ -29,8 +29,8 @@ runs:
       run: |
         WEBHOOK_URL="https://amdcloud.webhook.office.com/webhookb2/133d4f16-689b-4281-a94b-44725b948c77@3dd8961f-e488-4e60-8e11-a82d994e183d/IncomingWebhook/20c43fc799fd49e9813582813c638323/f9e22351-f1c9-494f-88c5-8e04accf2ffe"
 
-        # Clean up version_info to remove extra newlines, replace with \n\n for line breaks
-        version_info=$(echo "${{ inputs.version-info }}" | sed 's/\n/\n\n/g')
+        # Clean up version_info to remove extra newlines, replace with \n for line breaks
+        version_info=$(echo "${{ inputs.version-info }}" | sed 's/\n/\n/g')
 
         # Remove duplicate entries
         version_info=$(echo "$version_info" | awk '!seen[$0]++')
@@ -38,22 +38,12 @@ runs:
         # Remove first line from version_info
         version_info=$(echo "$version_info" | sed '1d')
 
-        # Check if version_info is empty
-        if [[ -z "$version_info" ]]; then
-          version_info="No version information available."
-        fi
+        # Format version information
+        formatted_version_info=$(echo "$version_info" | sed 's/ \+/\t/g' | sed 's/^[ \t]*//;s/[ \t]*$//')
 
-        # Capture required notifications
-        notifications=$(grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ryzenai_pip_list.txt | sed 's/^/ /; s/$/\n\n/' | tr -d '\r' | sed '/^$/d')
-
-        # Check if notifications is empty
-        if [[ -z "$notifications" ]]; then
-          notifications="No relevant notifications available."
-        fi
-
-        # Add AI analyzer information, but prevent duplicates
-        if ! echo "$notifications" | grep -q "aianalyzer"; then
-          notifications+="aianalyzer\n1.3.0.dev202410102250+g33080a\n\n"
+        # Check if formatted_version_info is empty
+        if [[ -z "$formatted_version_info" ]]; then
+          formatted_version_info="No version information available."
         fi
 
         # Send notification based on overall status
@@ -80,7 +70,7 @@ runs:
                             },
                             {
                               "type": "TextBlock",
-                              "text": "**Version Information:**\n\n'"${notifications}${version_info}"'",
+                              "text": "**Version Information:**\n\n'"${formatted_version_info}"'",
                               "color": "Attention"
                             }
                           ],
@@ -122,7 +112,7 @@ runs:
                             },
                             {
                               "type": "TextBlock",
-                              "text": "**Version Information:**\n\n'"${notifications}${version_info}"'",
+                              "text": "**Version Information:**\n\n'"${formatted_version_info}"'",
                               "color": "Good"
                             }
                           ],
