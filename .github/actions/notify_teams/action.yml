@@ -18,7 +18,7 @@ inputs:
     description: 'Name of the workflow'
     required: true
   version-info:
-    description: 'Version information to display, comma-separated'
+    description: 'Version information to display'
     required: true
 
 runs:
@@ -29,61 +29,94 @@ runs:
       run: |
         WEBHOOK_URL="https://amdcloud.webhook.office.com/webhookb2/133d4f16-689b-4281-a94b-44725b948c77@3dd8961f-e488-4e60-8e11-a82d994e183d/IncomingWebhook/20c43fc799fd49e9813582813c638323/f9e22351-f1c9-494f-88c5-8e04accf2ffe"
 
-        # Prepare and escape version info
+        # Escape potential special characters and handle empty version-info
         version_info=$(echo "${{ inputs.version-info }}" | sed 's/^[ \t]*//;s/[ \t]*$//')
         if [[ -z "$version_info" ]]; then
           version_info="No version information available."
         fi
 
-        # Split version info by comma and format it
-        formatted_version_info=$(echo "$version_info" | tr ',' '\n' | sed '/^$/d; s/^/• /')
-
-        # Ensure AI Analyzer version is included only once
-        aianalyzer_version="• aianalyzer 1.3.0.dev202410102250+g33080a"
-        combined_version_info="$aianalyzer_version\n$formatted_version_info"
-
-        # Set notifications using C shell format
-        set notifications=`cat notifications.txt | sed 's/"/\\"/g'`
-
-        # Send notification
-        curl -H 'Content-Type: application/json' \
-             -d '{
-                  "type": "message",
-                  "attachments": [
-                    {
-                      "contentType": "application/vnd.microsoft.card.adaptive",
-                      "content": {
-                        "type": "AdaptiveCard",
-                        "version": "1.2",
-                        "body": [
-                          {
-                            "type": "TextBlock",
-                            "text": "**Workflow Name:** '"${{ inputs.workflow-name }}"'",
-                            "color": "Good"
+        if [[ "${{ inputs.overall-status }}" == "failure" ]]; then
+          curl -H 'Content-Type: application/json' \
+               -d '{
+                    "type": "message",
+                    "attachments": [
+                      {
+                        "contentType": "application/vnd.microsoft.card.adaptive",
+                        "content": {
+                          "type": "AdaptiveCard",
+                          "version": "1.2",
+                          "body": [
+                            {
+                              "type": "TextBlock",
+                              "text": "**Workflow Name:** '"${{ inputs.workflow-name }}"'",
+                              "color": "Attention"
+                            },
+                            {
+                              "type": "TextBlock",
+                              "text": "**Workflow Status:** '"${{ inputs.workflow-status }}"'",
+                              "color": "Attention"
+                            },
+                            {
+                              "type": "TextBlock",
+                              "text": "**Version Information:** '"${version_info}"'",
+                              "color": "Attention"
+                            }
+                          ],
+                          "msteams": {
+                            "width": "Full"
                           },
-                          {
-                            "type": "TextBlock",
-                            "text": "**Workflow Status:** '"${{ inputs.workflow-status }}"'",
-                            "color": "Good"
-                          },
-                          {
-                            "type": "TextBlock",
-                            "text": "**Version Information:**\n'"${combined_version_info}"'",
-                            "color": "Good"
-                          }
-                        ],
-                        "msteams": {
-                          "width": "Full"
-                        },
-                        "actions": [
-                          {
-                            "type": "Action.OpenUrl",
-                            "title": "View Run",
-                            "url": "'"${{ inputs.run-url }}"'"
-                          }
-                        ]
+                          "actions": [
+                            {
+                              "type": "Action.OpenUrl",
+                              "title": "View Run",
+                              "url": "'"${{ inputs.run-url }}"'"
+                            }
+                          ]
+                        }
                       }
-                    }
-                  ]
-                }' \
-             "$WEBHOOK_URL"
+                    ]
+                  }' \
+               "$WEBHOOK_URL"
+        else
+          curl -H 'Content-Type: application/json' \
+               -d '{
+                    "type": "message",
+                    "attachments": [
+                      {
+                        "contentType": "application/vnd.microsoft.card.adaptive",
+                        "content": {
+                          "type": "AdaptiveCard",
+                          "version": "1.2",
+                          "body": [
+                            {
+                              "type": "TextBlock",
+                              "text": "**Workflow Name:** '"${{ inputs.workflow-name }}"'",
+                              "color": "Good"
+                            },
+                            {
+                              "type": "TextBlock",
+                              "text": "**Workflow Status:** '"${{ inputs.workflow-status }}"'",
+                              "color": "Good"
+                            },
+                            {
+                              "type": "TextBlock",
+                              "text": "**Version Information:**\n'"${version_info}"'",
+                              "color": "Good"
+                            }
+                          ],
+                          "msteams": {
+                            "width": "Full"
+                          },
+                          "actions": [
+                            {
+                              "type": "Action.OpenUrl",
+                              "title": "View Run",
+                              "url": "'"${{ inputs.run-url }}"'"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }' \
+               "$WEBHOOK_URL"
+        fi
