@@ -13,11 +13,13 @@ runs:
   using: 'composite'
   steps:
     - name: Set up environment
+      shell: bash
       run: |
         echo "Setting up the environment"
     
     - name: Read package versions
       id: read-packages
+      shell: bash
       run: |
         echo "Reading package versions from ${{ inputs.packages-file }}"
         notifications=$(grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ${{ inputs.packages-file }} | sed 's/^/ /; s/$/\n/' | tr -d '\r')
@@ -128,6 +130,7 @@ runs:
         }"
     
     - name: Send notification to Microsoft Teams
+      shell: bash
       run: |
         echo "Sending notification to Microsoft Teams"
         curl -H "Content-Type: application/json" -d "${{ steps.read-packages.outputs.payload }}" "${{ inputs.webhook-url }}"
