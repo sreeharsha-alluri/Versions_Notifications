@@ -35,6 +35,43 @@ runs:
           version_info="No version information available."
         fi
 
+        # Prepare package rows for the table
+        package_rows=""
+        while read -r line; do
+          package=$(echo "$line" | awk '{print $1}')
+          version=$(echo "$line" | awk '{print $2}')
+          package_rows+="{
+            \"type\": \"ColumnSet\",
+            \"columns\": [
+              {
+                \"type\": \"Column\",
+                \"width\": \"stretch\",
+                \"items\": [
+                  {
+                    \"type\": \"TextBlock\",
+                    \"text\": \"$package\",
+                    \"wrap\": true
+                  }
+                ]
+              },
+              {
+                \"type\": \"Column\",
+                \"width\": \"stretch\",
+                \"items\": [
+                  {
+                    \"type\": \"TextBlock\",
+                    \"text\": \"$version\",
+                    \"wrap\": true
+                  }
+                ]
+              }
+            ]
+          },"
+        done <<< "$version_info"
+
+        # Remove trailing comma
+        package_rows=${package_rows::-1}
+
         # Create the message body as a JSON object
         message_body=$(cat <<EOF
 {
@@ -58,14 +95,37 @@ runs:
           },
           {
             "type": "TextBlock",
-            "text": "**Version Information:**",
+            "text": "**Package Version Information:**",
             "wrap": true
           },
           {
-            "type": "TextBlock",
-            "text": "$version_info",
-            "wrap": true
-          }
+            "type": "ColumnSet",
+            "columns": [
+              {
+                "type": "Column",
+                "width": "stretch",
+                "items": [
+                  {
+                    "type": "TextBlock",
+                    "text": "Package",
+                    "weight": "Bolder"
+                  }
+                ]
+              },
+              {
+                "type": "Column",
+                "width": "stretch",
+                "items": [
+                  {
+                    "type": "TextBlock",
+                    "text": "Version",
+                    "weight": "Bolder"
+                  }
+                ]
+              }
+            ]
+          },
+          $package_rows
         ],
         "msteams": {
           "width": "Full"
