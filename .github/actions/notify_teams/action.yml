@@ -73,7 +73,7 @@ runs:
         package_rows=${package_rows::-1}
 
         # Create the message body as a JSON object
-        message_body=$(cat <<EOF
+        message_body=$(cat <<'EOF'
 {
   "type": "message",
   "attachments": [
@@ -85,13 +85,13 @@ runs:
         "body": [
           {
             "type": "TextBlock",
-            "text": "**Workflow Name:** ${{ inputs.workflow-name }}",
-            "color": "${{ inputs.overall-status }}" == "failure" ? "Attention" : "Good"
+            "text": "**Workflow Name:** ${workflow_name}",
+            "wrap": true
           },
           {
             "type": "TextBlock",
-            "text": "**Workflow Status:** ${{ inputs.workflow-status }}",
-            "color": "${{ inputs.overall-status }}" == "failure" ? "Attention" : "Good"
+            "text": "**Workflow Status:** ${workflow_status}",
+            "wrap": true
           },
           {
             "type": "TextBlock",
@@ -125,7 +125,7 @@ runs:
               }
             ]
           },
-          $package_rows
+          ${package_rows}
         ],
         "msteams": {
           "width": "Full"
@@ -134,7 +134,7 @@ runs:
           {
             "type": "Action.OpenUrl",
             "title": "View Run",
-            "url": "${{ inputs.run-url }}"
+            "url": "${run_url}"
           }
         ]
       }
@@ -143,6 +143,11 @@ runs:
 }
 EOF
 )
+
+        # Replace placeholders
+        message_body=$(echo "$message_body" | sed "s/\${workflow_name}/${{ inputs.workflow-name }}/g")
+        message_body=$(echo "$message_body" | sed "s/\${workflow_status}/${{ inputs.workflow-status }}/g")
+        message_body=$(echo "$message_body" | sed "s/\${run_url}/${{ inputs.run-url }}/g")
 
         # Send the message
         curl -H 'Content-Type: application/json' -d "$message_body" "$WEBHOOK_URL"
