@@ -1,4 +1,5 @@
 name: Notify Teams
+
 description: Notify Microsoft Teams about the workflow status and package versions.
 
 inputs:
@@ -35,6 +36,9 @@ runs:
         while read -r line; do
           package=$(echo "$line" | awk '{print $1}')
           version=$(echo "$line" | awk '{print $2}')
+          # Escape quotes in package and version
+          package=$(echo "$package" | sed 's/"/\\"/g')
+          version=$(echo "$version" | sed 's/"/\\"/g')
           package_rows+="{
             \"type\": \"ColumnSet\",
             \"columns\": [
@@ -64,8 +68,10 @@ runs:
           },"
         done <<< "$version_info"
 
-        # Remove the trailing comma from the last row
-        package_rows=${package_rows::-1}
+        # Remove the trailing comma from the last row if there are rows
+        if [ -n "$package_rows" ]; then
+          package_rows=${package_rows::-1}  # Remove the last comma
+        fi
 
         # Prepare the JSON payload
         message_body="{
@@ -78,12 +84,12 @@ runs:
               \"body\": [
                 {
                   \"type\": \"TextBlock\",
-                  \"text\": \"**Workflow Name:** ${workflow_name}\",
+                  \"text\": \"**Workflow Name:** ${workflow_name:-'N/A'}\",
                   \"wrap\": true
                 },
                 {
                   \"type\": \"TextBlock\",
-                  \"text\": \"**Workflow Status:** ${workflow_status}\",
+                  \"text\": \"**Workflow Status:** ${workflow_status:-'N/A'}\",
                   \"wrap\": true
                 },
                 {
@@ -118,7 +124,7 @@ runs:
                     }
                   ]
                 },
-                ${package_rows}  # Insert dynamically created rows here
+                ${package_rows}  # Dynamically created rows here
               ],
               \"msteams\": {
                 \"width\": \"Full\"
@@ -134,11 +140,6 @@ runs:
 
         # Debug output to inspect message_body
         echo "Message Body: $message_body"
-
-        # Replace placeholders in message_body
-        message_body=$(echo "$message_body" | sed "s/\${workflow_name}/${{ inputs.workflow-name }}/g")
-        message_body=$(echo "$message_body" | sed "s/\${workflow_status}/${{ inputs.workflow-status }}/g")
-        message_body=$(echo "$message_body" | sed "s/\${run_url}/${{ inputs.run-url }}/g")
 
         # Send the notification
         curl -H 'Content-Type: application/json' -d "$message_body" "$WEBHOOK_URL"
