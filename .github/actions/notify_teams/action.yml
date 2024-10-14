@@ -67,7 +67,7 @@ runs:
                 ]
               }
             ]
-          }"  # Removed the comma here
+          }"
           if [[ "$line" != "$(tail -n 1 <<< "$version_info")" ]]; then
             package_rows+=","
           fi
@@ -132,7 +132,7 @@ runs:
               \"actions\": [{
                 \"type\": \"Action.OpenUrl\",
                 \"title\": \"View Run\",
-                \"url\": \"${run_url}\"
+                \"url\": \"${{ inputs.run-url }}\"  # Replaced here directly
               }]
             }
           }]
@@ -140,11 +140,6 @@ runs:
 
         # Debug output to inspect message_body
         echo "Message Body: $message_body"
-
-        # Replace placeholders in message_body
-        message_body=$(echo "$message_body" | sed "s/\${workflow_name}/${{ inputs.workflow-name }}/g")
-        message_body=$(echo "$message_body" | sed "s/\${workflow_status}/${{ inputs.workflow-status }}/g")
-        message_body=$(echo "$message_body" | sed "s/\${run_url}/${{ inputs.run-url }}/g")
 
         # Send the notification
         curl -H 'Content-Type: application/json' -d "$message_body" "https://amdcloud.webhook.office.com/webhookb2/133d4f16-689b-4281-a94b-44725b948c77@3dd8961f-e488-4e60-8e11-a82d994e183d/IncomingWebhook/20c43fc799fd49e9813582813c638323/f9e22351-f1c9-494f-88c5-8e04accf2ffe"
