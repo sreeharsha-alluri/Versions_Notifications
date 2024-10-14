@@ -83,9 +83,11 @@ runs:
         if [ "${{ inputs.overall-status }}" == "success" ]; then
           status_color="good"       # Green color for success
           status_icon="✅"          # Tick mark for success
+          status_text="Success"
         else
           status_color="attention"  # Red color for failure
           status_icon="❌"          # Cross for failure
+          status_text="Failure"
         fi
 
         # Prepare the JSON payload
@@ -104,7 +106,7 @@ runs:
                 },
                 {
                   \"type\": \"TextBlock\",
-                  \"text\": \"$status_icon **Workflow Status:**\",
+                  \"text\": \"Workflow Status: $status_text $status_icon\",
                   \"wrap\": true,
                   \"color\": \"$status_color\"
                 },
