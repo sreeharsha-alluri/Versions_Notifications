@@ -24,6 +24,7 @@ jobs:
           echo -e "$notifications"  # Use echo -e to interpret escape sequences
           # Save the notifications to a file for later use
           echo -e "$notifications" > notifications.txt  # Save the formatted notifications
+          exit 1
           
       - name: Notify Teams
         uses: ./.github/actions/notify_teams
