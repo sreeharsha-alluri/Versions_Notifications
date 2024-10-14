@@ -67,10 +67,13 @@ runs:
                 ]
               }
             ]
-          },"
+          }"  # Removed the comma here
+          if [[ "$line" != "$(tail -n 1 <<< "$version_info")" ]]; then
+            package_rows+=","
+          fi
         done <<< "$version_info"
-        package_rows=${package_rows::-1}
 
+        # Prepare the JSON payload
         message_body="{
           \"type\": \"message\",
           \"attachments\": [{
@@ -121,7 +124,7 @@ runs:
                     }
                   ]
                 },
-                ${package_rows}  # Insert dynamically created rows here
+                $package_rows  # Insert dynamically created rows here
               ],
               \"msteams\": {
                 \"width\": \"Full\"
