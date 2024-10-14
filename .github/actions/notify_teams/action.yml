@@ -34,7 +34,13 @@ runs:
         echo "Action Name: ${{ inputs.action-name }}"
         echo "Workflow Status: ${{ inputs.workflow-status }}"
         echo "Workflow Name: ${{ inputs.workflow-name }}"
-        echo "Version Info: ${{ inputs.version-info }}"
+        echo "Version Info: ${{ inputs.version-info }}"  # Debugging the input
+
+        # Check if version-info is empty
+        if [ -z "${{ inputs.version-info }}" ]; then
+          echo "Error: Version info is empty!"
+          exit 1  # Exit with an error if version-info is empty
+        fi
 
         # Prepare rows for each package in the version info
         package_rows=""
@@ -73,7 +79,7 @@ runs:
           if [[ "$line" != "$(tail -n 1 <<< "$version_info")" ]]; then
             package_rows+=","
           fi
-        done <<< "$version_info"
+        done <<< "${{ inputs.version-info }}"
 
         # Prepare the JSON payload
         message_body="{
