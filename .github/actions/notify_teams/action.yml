@@ -52,7 +52,7 @@ runs:
             \"columns\": [
               {
                 \"type\": \"Column\",
-                \"width\": \"stretch\",
+                \"width\": \"50%\",  # Adjust width for better presentation
                 \"items\": [
                   {
                     \"type\": \"TextBlock\",
@@ -63,7 +63,7 @@ runs:
               },
               {
                 \"type\": \"Column\",
-                \"width\": \"stretch\",
+                \"width\": \"50%\",  # Adjust width for better presentation
                 \"items\": [
                   {
                     \"type\": \"TextBlock\",
@@ -73,7 +73,7 @@ runs:
                 ]
               }
             ]
-          },"
+          },"  
         done <<< "${{ inputs.version-info }}"
 
         # Remove trailing comma if present
@@ -108,23 +108,25 @@ runs:
                   \"columns\": [
                     {
                       \"type\": \"Column\",
-                      \"width\": \"stretch\",
+                      \"width\": \"50%\",
                       \"items\": [
                         {
                           \"type\": \"TextBlock\",
                           \"text\": \"Package\",
-                          \"weight\": \"Bolder\"
+                          \"weight\": \"Bolder\",
+                          \"wrap\": true
                         }
                       ]
                     },
                     {
                       \"type\": \"Column\",
-                      \"width\": \"stretch\",
+                      \"width\": \"50%\",
                       \"items\": [
                         {
                           \"type\": \"TextBlock\",
                           \"text\": \"Version\",
-                          \"weight\": \"Bolder\"
+                          \"weight\": \"Bolder\",
+                          \"wrap\": true
                         }
                       ]
                     }
