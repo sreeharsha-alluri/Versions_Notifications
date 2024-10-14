@@ -69,8 +69,6 @@ runs:
             ]
           },"
         done <<< "$version_info"
-
-        # Remove the trailing comma from the last row
         package_rows=${package_rows::-1}
 
         message_body="{
