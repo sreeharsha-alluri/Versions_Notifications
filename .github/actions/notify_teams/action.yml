@@ -28,16 +28,19 @@ runs:
     - name: Prepare and Send Notification
       shell: bash
       run: |
-        # Define the webhook URL
-        WEBHOOK_URL="https://amdcloud.webhook.office.com/webhookb2/133d4f16-689b-4281-a94b-44725b948c77@3dd8961f-e488-4e60-8e11-a82d994e183d/IncomingWebhook/20c43fc799fd49e9813582813c638323/f9e22351-f1c9-494f-88c5-8e04accf2ffe"
+        # Debug input values
+        echo "Overall Status: ${{ inputs.overall-status }}"
+        echo "Run URL: ${{ inputs.run-url }}"
+        echo "Action Name: ${{ inputs.action-name }}"
+        echo "Workflow Status: ${{ inputs.workflow-status }}"
+        echo "Workflow Name: ${{ inputs.workflow-name }}"
+        echo "Version Info: ${{ inputs.version-info }}"
 
+        # Prepare rows for each package in the version info
         package_rows=""
         while read -r line; do
           package=$(echo "$line" | awk '{print $1}')
           version=$(echo "$line" | awk '{print $2}')
-          # Escape quotes in package and version
-          package=$(echo "$package" | sed 's/"/\\"/g')
-          version=$(echo "$version" | sed 's/"/\\"/g')
           package_rows+="{
             \"type\": \"ColumnSet\",
             \"columns\": [
@@ -67,10 +70,8 @@ runs:
           },"
         done <<< "$version_info"
 
-        # Remove the trailing comma from the last row if there are rows
-        if [ -n "$package_rows" ]; then
-          package_rows=${package_rows::-1}
-        fi
+        # Remove the trailing comma from the last row
+        package_rows=${package_rows::-1}
 
         # Prepare the JSON payload
         message_body="{
@@ -83,12 +84,12 @@ runs:
               \"body\": [
                 {
                   \"type\": \"TextBlock\",
-                  \"text\": \"**Workflow Name:** ${workflow_name:-'N/A'}\",
+                  \"text\": \"**Workflow Name:** ${workflow_name}\",
                   \"wrap\": true
                 },
                 {
                   \"type\": \"TextBlock\",
-                  \"text\": \"**Workflow Status:** ${workflow_status:-'N/A'}\",
+                  \"text\": \"**Workflow Status:** ${workflow_status}\",
                   \"wrap\": true
                 },
                 {
@@ -123,7 +124,7 @@ runs:
                     }
                   ]
                 },
-                ${package_rows}
+                ${package_rows}  # Insert dynamically created rows here
               ],
               \"msteams\": {
                 \"width\": \"Full\"
@@ -140,5 +141,10 @@ runs:
         # Debug output to inspect message_body
         echo "Message Body: $message_body"
 
+        # Replace placeholders in message_body
+        message_body=$(echo "$message_body" | sed "s/\${workflow_name}/${{ inputs.workflow-name }}/g")
+        message_body=$(echo "$message_body" | sed "s/\${workflow_status}/${{ inputs.workflow-status }}/g")
+        message_body=$(echo "$message_body" | sed "s/\${run_url}/${{ inputs.run-url }}/g")
+
         # Send the notification
-        curl -H 'Content-Type: application/json' -d "$message_body" "$WEBHOOK_URL"
+        curl -H 'Content-Type: application/json' -d "$message_body" "https://amdcloud.webhook.office.com/webhookb2/133d4f16-689b-4281-a94b-44725b948c77@3dd8961f-e488-4e60-8e11-a82d994e183d/IncomingWebhook/20c43fc799fd49e9813582813c638323/f9e22351-f1c9-494f-88c5-8e04accf2ffe"
