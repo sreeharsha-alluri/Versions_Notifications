@@ -47,6 +47,8 @@ runs:
         while read -r line; do
           package=$(echo "$line" | awk '{print $1}')
           version=$(echo "$line" | awk '{print $2}')
+          
+          # Append package and version to package_rows without extra spaces
           package_rows+="{
             \"type\": \"ColumnSet\",
             \"columns\": [
