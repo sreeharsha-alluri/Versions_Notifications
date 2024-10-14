@@ -1,15 +1,16 @@
 name: Notify Teams
-description: Sends a notification to Microsoft Teams with build status and version information.
+
+description: Notify Microsoft Teams about the workflow status and package versions.
 
 inputs:
   overall-status:
-    description: 'Overall status of the build (success or failure)'
+    description: 'Overall status of the build job'
     required: true
   run-url:
-    description: 'URL to the GitHub Actions run'
+    description: 'URL of the workflow run'
     required: true
   action-name:
-    description: 'Name of the job or action'
+    description: 'Name of the action'
     required: true
   workflow-status:
     description: 'Status of the workflow'
@@ -18,23 +19,15 @@ inputs:
     description: 'Name of the workflow'
     required: true
   version-info:
-    description: 'Version information to display'
+    description: 'Package version information'
     required: true
 
 runs:
-  using: "composite"
+  using: "bash"
   steps:
-    - name: Send Notification
+    - name: Prepare and Send Notification
       shell: bash
       run: |
-        WEBHOOK_URL="https://amdcloud.webhook.office.com/webhookb2/133d4f16-689b-4281-a94b-44725b948c77@3dd8961f-e488-4e60-8e11-a82d994e183d/IncomingWebhook/20c43fc799fd49e9813582813c638323/f9e22351-f1c9-494f-88c5-8e04accf2ffe"
-
-        # Escape special characters in version info
-        version_info=$(echo "${{ inputs.version-info }}" | sed 's/^[ \t]*//;s/[ \t]*$//')
-        if [[ -z "$version_info" ]]; then
-          version_info="No version information available."
-        fi
-
         # Prepare rows for each package in the version info
         package_rows=""
         while read -r line; do
@@ -73,7 +66,72 @@ runs:
         package_rows=${package_rows::-1}
 
         # Prepare the JSON payload
-        message_body="{\"type\": \"message\",\"attachments\": [{\"contentType\": \"application/vnd.microsoft.card.adaptive\",\"content\": {\"type\": \"AdaptiveCard\",\"version\": \"1.2\",\"body\": [{\"type\": \"TextBlock\",\"text\": \"**Workflow Name:** ${workflow_name}\",\"wrap\": true},{\"type\": \"TextBlock\",\"text\": \"**Workflow Status:** ${workflow_status}\",\"wrap\": true},{\"type\": \"TextBlock\",\"text\": \"**Package Version Information:**\",\"wrap\": true},{\"type\": \"ColumnSet\",\"columns\": [{\"type\": \"Column\",\"width\": \"stretch\",\"items\": [{\"type\": \"TextBlock\",\"text\": \"Package\",\"weight\": \"Bolder\"}]},{\"type\": \"Column\",\"width\": \"stretch\",\"items\": [{\"type\": \"TextBlock\",\"text\": \"Version\",\"weight\": \"Bolder\"}]}]},${package_rows}},],\"msteams\": {\"width\": \"Full\"},\"actions\": [{\"type\": \"Action.OpenUrl\",\"title\": \"View Run\",\"url\": \"${run_url}\"}]}}"
+        message_body="{
+          \"type\": \"message\",
+          \"attachments\": [{
+            \"contentType\": \"application/vnd.microsoft.card.adaptive\",
+            \"content\": {
+              \"type\": \"AdaptiveCard\",
+              \"version\": \"1.2\",
+              \"body\": [
+                {
+                  \"type\": \"TextBlock\",
+                  \"text\": \"**Workflow Name:** ${workflow_name}\",
+                  \"wrap\": true
+                },
+                {
+                  \"type\": \"TextBlock\",
+                  \"text\": \"**Workflow Status:** ${workflow_status}\",
+                  \"wrap\": true
+                },
+                {
+                  \"type\": \"TextBlock\",
+                  \"text\": \"**Package Version Information:**\",
+                  \"wrap\": true
+                },
+                {
+                  \"type\": \"ColumnSet\",
+                  \"columns\": [
+                    {
+                      \"type\": \"Column\",
+                      \"width\": \"stretch\",
+                      \"items\": [
+                        {
+                          \"type\": \"TextBlock\",
+                          \"text\": \"Package\",
+                          \"weight\": \"Bolder\"
+                        }
+                      ]
+                    },
+                    {
+                      \"type\": \"Column\",
+                      \"width\": \"stretch\",
+                      \"items\": [
+                        {
+                          \"type\": \"TextBlock\",
+                          \"text\": \"Version\",
+                          \"weight\": \"Bolder\"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                ${package_rows}  # Insert dynamically created rows here
+              ],
+              \"msteams\": {
+                \"width\": \"Full\"
+              },
+              \"actions\": [{
+                \"type\": \"Action.OpenUrl\",
+                \"title\": \"View Run\",
+                \"url\": \"${run_url}\"
+              }]
+            }
+          }]
+        }"
+
+        # Debug output to inspect message_body
+        echo "Message Body: $message_body"
 
         # Replace placeholders in message_body
         message_body=$(echo "$message_body" | sed "s/\${workflow_name}/${{ inputs.workflow-name }}/g")
