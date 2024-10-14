@@ -73,7 +73,6 @@ runs:
         # Remove the trailing comma from the last row
         package_rows=${package_rows::-1}
 
-        # Prepare the JSON payload
         message_body="{
           \"type\": \"message\",
           \"attachments\": [{
