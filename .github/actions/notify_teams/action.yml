@@ -1,5 +1,4 @@
 name: Notify Teams
-
 description: Notify Microsoft Teams about the workflow status and package versions.
 
 inputs:
