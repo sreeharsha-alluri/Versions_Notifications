@@ -73,7 +73,7 @@ runs:
         package_rows=${package_rows::-1}
 
         # Create the message body as a JSON object
-        message_body=$(cat <<'EOF'
+        message_body=$(cat <<EOF
 {
   "type": "message",
   "attachments": [
