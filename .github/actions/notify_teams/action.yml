@@ -1,37 +1,53 @@
-name: Build and Notify
-description: Sends notification to Microsoft Teams after build completion
+name: Notify Teams
+
+description: Notify Microsoft Teams about the workflow status and package versions.
 
 inputs:
-  webhook-url:
-    description: 'Microsoft Teams webhook URL'
+  overall-status:
+    description: 'Overall status of the build job'
     required: true
-  packages-file:
-    description: 'Path to the file containing pip package versions'
+  run-url:
+    description: 'URL of the workflow run'
+    required: true
+  action-name:
+    description: 'Name of the action'
+    required: true
+  workflow-status:
+    description: 'Status of the workflow'
+    required: true
+  workflow-name:
+    description: 'Name of the workflow'
+    required: true
+  version-info:
+    description: 'Package version information'
     required: true
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
-    - name: Set up environment
+    - name: Prepare and Send Notification
       shell: bash
       run: |
-        echo "Setting up the environment"
-    
-    - name: Read package versions
-      id: read-packages
-      shell: bash
-      run: |
-        echo "Reading package versions from ${{ inputs.packages-file }}"
-        notifications=$(grep -E '^(aianalyzer|device-essentials-phx|device-essentials-strx|flexml|flexml-metadata|microkernel-tiling|onnxruntime-vitisai|ryzen-ai|torch|torch-mlir|torchvision|vai-q-onnx|vaiml|vaitrace|vitis-aie-essentials|vitis_mllib|voe)' ${{ inputs.packages-file }} | sed 's/^/ /; s/$/\n/' | tr -d '\r')
-        echo "Captured notifications:"
-        echo -e "$notifications"
+        # Debug input values
+        echo "Overall Status: ${{ inputs.overall-status }}"
+        echo "Run URL: ${{ inputs.run-url }}"
+        echo "Action Name: ${{ inputs.action-name }}"
+        echo "Workflow Status: ${{ inputs.workflow-status }}"
+        echo "Workflow Name: ${{ inputs.workflow-name }}"
+        echo "Version Info: ${{ inputs.version-info }}"  # Debugging the input
 
-        # Prepare the adaptive card payload
-        PACKAGE_VERSIONS=""
-        while IFS= read -r line; do
-          IFS=' ' read -r package version <<< "$line"
-          PACKAGE_VERSIONS+=$(echo "
-          {
+        # Check if version-info is empty
+        if [ -z "${{ inputs.version-info }}" ]; then
+          echo "Error: Version info is empty!"
+          exit 1  # Exit with an error if version-info is empty
+        fi
+
+        # Prepare rows for each package in the version info
+        package_rows=""
+        while read -r line; do
+          package=$(echo "$line" | awk '{print $1}')
+          version=$(echo "$line" | awk '{print $2}')
+          package_rows+="{
             \"type\": \"ColumnSet\",
             \"columns\": [
               {
@@ -57,15 +73,14 @@ runs:
                 ]
               }
             ]
-          },")
-        done <<< "$notifications"
+          },"
+        done <<< "${{ inputs.version-info }}"
 
-        # Remove the trailing comma from PACKAGE_VERSIONS
-        PACKAGE_VERSIONS=${PACKAGE_VERSIONS%,}
+        # Remove trailing comma if present
+        package_rows=${package_rows%,}
 
-        # Construct the final payload
-        RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-        echo "::set-output name=payload::{
+        # Prepare the JSON payload
+        message_body="{
           \"type\": \"message\",
           \"attachments\": [{
             \"contentType\": \"application/vnd.microsoft.card.adaptive\",
@@ -75,12 +90,12 @@ runs:
               \"body\": [
                 {
                   \"type\": \"TextBlock\",
-                  \"text\": \"**Workflow Name:** Build and Notify\",
+                  \"text\": \"**Workflow Name:** ${{ inputs.workflow-name }}\",
                   \"wrap\": true
                 },
                 {
                   \"type\": \"TextBlock\",
-                  \"text\": \"**Workflow Status:** success\",
+                  \"text\": \"**Workflow Status:** ${{ inputs.workflow-status }}\",
                   \"wrap\": true
                 },
                 {
@@ -115,7 +130,7 @@ runs:
                     }
                   ]
                 },
-                $PACKAGE_VERSIONS
+                $package_rows
               ],
               \"msteams\": {
                 \"width\": \"Full\"
@@ -123,14 +138,14 @@ runs:
               \"actions\": [{
                 \"type\": \"Action.OpenUrl\",
                 \"title\": \"View Run\",
-                \"url\": \"$RUN_URL\"
+                \"url\": \"${{ inputs.run-url }}\"
               }]
             }
           }]
         }"
-    
-    - name: Send notification to Microsoft Teams
-      shell: bash
-      run: |
-        echo "Sending notification to Microsoft Teams"
-        curl -H "Content-Type: application/json" -d "${{ steps.read-packages.outputs.payload }}" "${{ inputs.webhook-url }}"
+
+        # Debug output to inspect message_body
+        echo "Message Body: $message_body"
+
+        # Send the notification
+        curl -H 'Content-Type: application/json' -d "$message_body" "https://amdcloud.webhook.office.com/webhookb2/133d4f16-689b-4281-a94b-44725b948c77@3dd8961f-e488-4e60-8e11-a82d994e183d/IncomingWebhook/20c43fc799fd49e9813582813c638323/f9e22351-f1c9-494f-88c5-8e04accf2ffe"
