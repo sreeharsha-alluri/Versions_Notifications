@@ -28,8 +28,6 @@ runs:
     - name: Prepare and Send Notification
       shell: bash
       run: |
-        # Install curl if it's not available
-        sudo apt-get update && sudo apt-get install -y curl
 
         # Prepare rows for each package in the version info
         package_rows=""
