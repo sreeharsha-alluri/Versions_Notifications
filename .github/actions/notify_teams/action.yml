@@ -52,7 +52,7 @@ runs:
             \"columns\": [
               {
                 \"type\": \"Column\",
-                \"width\": \"50%\",  # Use a percentage for width
+                \"width\": \"50%\",  # Use a valid percentage for width
                 \"items\": [
                   {
                     \"type\": \"TextBlock\",
@@ -63,7 +63,7 @@ runs:
               },
               {
                 \"type\": \"Column\",
-                \"width\": \"50%\",  # Use a percentage for width
+                \"width\": \"50%\",  # Use a valid percentage for width
                 \"items\": [
                   {
                     \"type\": \"TextBlock\",
