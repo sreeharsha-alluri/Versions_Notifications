@@ -68,6 +68,8 @@ runs:
               }
             ]
           }"
+
+          # Add a comma if it's not the last line
           if [[ "$line" != "$(tail -n 1 <<< "$version_info")" ]]; then
             package_rows+=","
           fi
@@ -84,12 +86,12 @@ runs:
               \"body\": [
                 {
                   \"type\": \"TextBlock\",
-                  \"text\": \"**Workflow Name:** ${workflow_name}\",
+                  \"text\": \"**Workflow Name:** ${{ inputs.workflow-name }}\",
                   \"wrap\": true
                 },
                 {
                   \"type\": \"TextBlock\",
-                  \"text\": \"**Workflow Status:** ${workflow_status}\",
+                  \"text\": \"**Workflow Status:** ${{ inputs.workflow-status }}\",
                   \"wrap\": true
                 },
                 {
@@ -124,7 +126,7 @@ runs:
                     }
                   ]
                 },
-                $package_rows  # Insert dynamically created rows here
+                $package_rows
               ],
               \"msteams\": {
                 \"width\": \"Full\"
@@ -132,7 +134,7 @@ runs:
               \"actions\": [{
                 \"type\": \"Action.OpenUrl\",
                 \"title\": \"View Run\",
-                \"url\": \"${{ inputs.run-url }}\"  # Replaced here directly
+                \"url\": \"${{ inputs.run-url }}\"
               }]
             }
           }]
