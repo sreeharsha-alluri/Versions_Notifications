@@ -52,7 +52,7 @@ runs:
             \"columns\": [
               {
                 \"type\": \"Column\",
-                \"width\": \"50%\",
+                \"width\": \"stretch\",
                 \"items\": [
                   {
                     \"type\": \"TextBlock\",
@@ -63,7 +63,7 @@ runs:
               },
               {
                 \"type\": \"Column\",
-                \"width\": \"50%\",
+                \"width\": \"stretch\",
                 \"items\": [
                   {
                     \"type\": \"TextBlock\",
@@ -108,25 +108,23 @@ runs:
                   \"columns\": [
                     {
                       \"type\": \"Column\",
-                      \"width\": \"50%\",
+                      \"width\": \"stretch\",
                       \"items\": [
                         {
                           \"type\": \"TextBlock\",
                           \"text\": \"Package\",
-                          \"weight\": \"Bolder\",
-                          \"wrap\": true
+                          \"weight\": \"Bolder\"
                         }
                       ]
                     },
                     {
                       \"type\": \"Column\",
-                      \"width\": \"50%\",
+                      \"width\": \"stretch\",
                       \"items\": [
                         {
                           \"type\": \"TextBlock\",
                           \"text\": \"Version\",
-                          \"weight\": \"Bolder\",
-                          \"wrap\": true
+                          \"weight\": \"Bolder\"
                         }
                       ]
                     }
