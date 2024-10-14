@@ -27,6 +27,7 @@ jobs:
           exit 1
           
       - name: Notify Teams
+        if: always()
         uses: ./.github/actions/notify_teams
         with:
           overall-status: ${{ job.status }}  # Capturing the overall status of the build job
