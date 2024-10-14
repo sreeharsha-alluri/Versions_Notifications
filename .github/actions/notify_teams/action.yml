@@ -79,6 +79,15 @@ runs:
         # Remove trailing comma if present
         package_rows=${package_rows%,}
 
+        # Set the workflow status color and icon based on overall status
+        if [ "${{ inputs.overall-status }}" == "success" ]; then
+          status_color="good"       # Green color for success
+          status_icon="✅"          # Tick mark for success
+        else
+          status_color="attention"  # Red color for failure
+          status_icon="❌"          # Cross for failure
+        fi
+
         # Prepare the JSON payload
         message_body="{
           \"type\": \"message\",
@@ -95,8 +104,9 @@ runs:
                 },
                 {
                   \"type\": \"TextBlock\",
-                  \"text\": \"**Workflow Status:** ${{ inputs.workflow-status }}\",
-                  \"wrap\": true
+                  \"text\": \"$status_icon **Workflow Status:**\",
+                  \"wrap\": true,
+                  \"color\": \"$status_color\"
                 },
                 {
                   \"type\": \"TextBlock\",
