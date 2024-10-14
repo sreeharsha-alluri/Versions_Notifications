@@ -76,10 +76,13 @@ runs:
           }"
 
           # Add a comma if it's not the last line
-          if [[ "$line" != "$(tail -n 1 <<< "$version_info")" ]]; then
+          if [[ "$line" != "$(tail -n 1 <<< "${{ inputs.version-info }}")" ]]; then
             package_rows+=","
           fi
         done <<< "${{ inputs.version-info }}"
+
+        # Remove the last comma if any
+        package_rows=${package_rows%,}  # Remove trailing comma if present
 
         # Prepare the JSON payload
         message_body="{
