@@ -23,14 +23,13 @@ inputs:
     required: true
 
 runs:
-  using: 'docker'
-  image: 'ubuntu:latest'
+  using: "composite"
   steps:
     - name: Prepare and Send Notification
       shell: bash
       run: |
         # Install curl if it's not available
-        apt-get update && apt-get install -y curl
+        sudo apt-get update && sudo apt-get install -y curl
 
         # Prepare rows for each package in the version info
         package_rows=""
